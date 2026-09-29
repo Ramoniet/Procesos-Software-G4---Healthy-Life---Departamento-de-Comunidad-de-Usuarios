@@ -37,15 +37,14 @@ En este primer sprint se ha priorizado dejar cerrado el arranque del proyecto y 
 
 | Nombre | Rol en el Sprint 1 | Fortalezas |
 |---|---|---|
-| Jorge | — | Liderazgo, Python, resolutivo |
-| Ramón | — | Trabajo en equipo, creativo, organizado |
-| Raúl | — | Colaborativo, trabajador, responsable |
-| Héctor | — | Desarrollo web, trabajo en equipo, gestión |
-| Daniel | — | Manejo de IA, responsable, creativo |
-| Javier | — | Profesional, proactivo, experimentado |
-| Lucille | — | Eficaz, ciberseguridad, redes |
+| Jorge | Product Owner | Liderazgo, Python, resolutivo |
+| Ramón | Equipo de desarrollo | Trabajo en equipo, creativo, organizado |
+| Raúl | Equipo de desarrollo | Colaborativo, trabajador, responsable |
+| Héctor | Equipo de desarrollo | Desarrollo web, trabajo en equipo, gestión |
+| Daniel | Equipo de desarrollo | Manejo de IA, responsable, creativo |
+| Javier | Scrum Master | Profesional, proactivo, experimentado |
+| Lucille | Equipo de desarrollo | Eficaz, ciberseguridad, redes |
 
-*(Completar la columna "Rol" con Product Owner delegado / Scrum Master / Equipo de desarrollo según la rotación del sprint)*
 
 ## Arquitectura y flujo
 
@@ -108,20 +107,11 @@ cp .env.example .env
   - Sin secretos ni credenciales en el código fuente ni en el historial de commits.
   - *(a partir del Sprint 2: pruebas escritas y en verde en el pipeline de CI)*
 
-## Interfaces con otros módulos
-
-| Módulo | Datos intercambiados | Formato | Estado |
-|---|---|---|---|
-| E1 — Gestión de usuarios | *(completar)* | *(completar)* | Pendiente / Acordado |
-| E2 — Seguimiento de hábitos | *(completar)* | *(completar)* | Pendiente / Acordado |
-| *(añadir según acuerdos con otros equipos)* | | | |
-
-Los archivos mock de ejemplo acordados con otros equipos se encuentran en `/mocks` *(ajustar ruta si procede)*.
 
 ## Enlaces del proyecto
 
-- Tablero de Jira: *(añadir enlace)*
-- Tablero de Miro: *(añadir enlace)*
+- Tablero de Jira: (https://grupo4-practica1-software.atlassian.net/jira/software/projects/CHLS/summary?atlOrigin=eyJpIjoiMDAzODU0ZjFlOGY3NGQ3Y2IyMDMyNWRmNjAwMmQyNmMiLCJwIjoiaiJ9)
+- Tablero de Miro (https://miro.com/welcomeonboard/U2pWek9IdVJxNFpHWCtwNG95MzE3VWhRdWJhVEVNQlZobkY2SDByM0g5NmlvcDFyN1haaVdKT2xrSUxoNWx4RTVJU1pTbHBHQ2dyQmRLUjVoR29EdVVCY0ZVUjREbmMwNENLc2plblFqT2lPOW5tSjJNRWo0SzNlYlh2b1hBZzVnbHpza3F6REdEcmNpNEFOMmJXWXBBPT0hdjE=?share_link_id=248626970100)
 
 ## Licencia
 
