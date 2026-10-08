@@ -3,7 +3,6 @@ import { Logo } from './Logo.tsx';
 import { Navbar } from './Navbar.tsx';
 import { UserProfile } from './UserProfile.tsx';
 import { MobileMenu } from './MobileMenu.tsx';
-import { UserSwitcher } from './UserSwitcher.tsx';
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -13,12 +12,7 @@ export function Header() {
       <div className="flex items-center justify-between p-3 gap-4">
         <Logo />
         <Navbar className="hidden md:flex flex-1" />
-
-        {/* Zona derecha: switcher dev + perfil */}
-        <div className="hidden md:flex items-center gap-3 shrink-0">
-          <UserSwitcher />
-          <UserProfile />
-        </div>
+        <UserProfile className="hidden md:flex shrink-0" />
 
         {/* Botón hamburguesa mobile */}
         <button
