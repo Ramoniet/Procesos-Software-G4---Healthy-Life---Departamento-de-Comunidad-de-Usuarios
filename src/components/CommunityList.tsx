@@ -1,27 +1,35 @@
 import { useState } from "react";
-import { ComunityCard, type ComunityCardProps } from "./ComunityCard.tsx";
+import { useNavigate } from "react-router-dom";
+import { ComunityCard } from "./ComunityCard.tsx";
 import { CreateCommunityForm } from "./CreateCommunityForm.tsx";
+import { useApp } from "../app/AppContext.tsx";
+import type { CommunityTopic } from "../types/index.ts";
+import { TOPIC_LIST } from "../utils/topics.ts";
 
 export function CommunityList() {
-  const MOCK_COMMUNITIES: ComunityCardProps[] = [];
-
+  const { communities, createCommunity, currentUser } = useApp();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [activeTopic, setActiveTopic] = useState<CommunityTopic | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [comunity, setComunity] = useState<ComunityCardProps[]>(MOCK_COMMUNITIES);
-  const handleCreate = (community: ComunityCardProps) => {
-    setComunity([...comunity, community]);
+
+  const handleCreate = (name: string, description: string, topic: CommunityTopic) => {
+    createCommunity(name, description, topic);
     setShowForm(false);
   };
-  const filtered = comunity.filter(
-    (c) =>
+
+  const filtered = communities.filter((c) => {
+    const matchesSearch =
       c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.description.toLowerCase().includes(search.toLowerCase()),
-  );
+      c.description.toLowerCase().includes(search.toLowerCase());
+    const matchesTopic = activeTopic === null || c.topic === activeTopic;
+    return matchesSearch && matchesTopic;
+  });
 
   return (
     <section className="p-6">
       {/* Toolbar: búsqueda + botón crear */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
         <h1 className="text-2xl font-semibold text-secondary">
           Todas las comunidades
         </h1>
@@ -42,15 +50,47 @@ export function CommunityList() {
         </div>
       </div>
 
+      {/* Filtros por temática */}
+      <div className="flex items-center gap-2 flex-wrap mb-6">
+        <button
+          onClick={() => setActiveTopic(null)}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all cursor-pointer ${
+            activeTopic === null
+              ? 'bg-secondary text-white border-secondary'
+              : 'border-gray-200 text-gray-500 hover:border-gray-400'
+          }`}
+        >
+          Todas
+        </button>
+        {TOPIC_LIST.map(([key, meta]) => (
+          <button
+            key={key}
+            onClick={() => setActiveTopic(activeTopic === key ? null : key)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all cursor-pointer ${
+              activeTopic === key
+                ? `${meta.badgeCls} border-transparent`
+                : 'border-gray-200 text-gray-500 hover:border-gray-400'
+            }`}
+          >
+            <span>{meta.emoji}</span>
+            {meta.label}
+          </button>
+        ))}
+      </div>
+
       {/* Grid de tarjetas */}
       {filtered.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.map((community) => (
             <ComunityCard
-              key={community.name}
+              key={community.id}
               name={community.name}
               description={community.description}
+              topic={community.topic}
               members={community.members}
+              isAdmin={community.adminId === currentUser.id}
+              isMember={community.memberIds.includes(currentUser.id)}
+              onViewDetails={() => navigate(`/comunidad/${community.id}`)}
             />
           ))}
         </div>
@@ -59,14 +99,14 @@ export function CommunityList() {
           No se encontraron comunidades.
         </p>
       )}
-      {
-        showForm && (
-          <CreateCommunityForm
-            onSubmit={handleCreate}
-            onClose={() => setShowForm(false)}
-          />
-        )
-      }
+
+      {/* Modal: formulario de creación */}
+      {showForm && (
+        <CreateCommunityForm
+          onSubmit={handleCreate}
+          onClose={() => setShowForm(false)}
+        />
+      )}
     </section>
   );
 }
