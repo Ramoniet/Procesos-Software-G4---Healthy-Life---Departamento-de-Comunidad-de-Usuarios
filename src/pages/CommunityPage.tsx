@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../app/AppContext.tsx';
 import { TOPICS } from '../utils/topics.ts';
@@ -9,7 +10,11 @@ import type { Post } from '../types/index.ts';
 export function CommunityPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { communities, currentUser, users, joinCommunity, deleteCommunity } = useApp();
+  // HU-05: Se extrae leaveCommunity del contexto
+  const { communities, currentUser, users, joinCommunity, leaveCommunity, deleteCommunity } = useApp();
+
+  // HU-05: Estado para controlar la visibilidad del modal de confirmación
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   const community = communities.find((c) => c.id === id);
   //HU-12
@@ -43,6 +48,12 @@ export function CommunityPage() {
 
   const handleJoin = () => {
     joinCommunity(community.id);
+  };
+
+  // HU-05: Función que ejecuta el abandono efectivo y cierra el modal
+  const handleConfirmLeave = () => {
+    leaveCommunity(community.id);
+    setShowLeaveModal(false);
   };
 
   const handleDelete = () => {
@@ -146,11 +157,10 @@ export function CommunityPage() {
               </button>
             </>
           ) : isMember ? (
-            /* Vista: Miembro */
+            /* HU-05: Vista: Miembro -> Abre el modal de confirmación */
             <button
-              disabled
-              title="Próximamente"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-500 border-2 border-gray-200 bg-white/60 rounded-xl opacity-60 cursor-not-allowed"
+              onClick={() => setShowLeaveModal(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-red-600 border-2 border-red-200 hover:bg-red-50 hover:border-red-300 active:scale-95 rounded-xl transition-all cursor-pointer shadow-sm"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -187,35 +197,20 @@ export function CommunityPage() {
             </div>
           </div>
         )}
-
-        {/* Feed vacío */}
-        {/* <div className="flex flex-col items-center justify-center gap-3 py-16 border-2 border-dashed border-gray-200 rounded-2xl text-center">
-          <span className="text-4xl">📝</span>
-          <p className="text-gray-400 font-medium text-sm">
-            Aún no hay publicaciones en esta comunidad.
-          </p>
-          <p className="text-gray-300 text-xs">
-            Las publicaciones aparecerán aquí cuando se implementen.
-          </p>
-        </div> */}
       </div>
 
       {/* HU-12 Publicación de prueba */}
       <article className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-
-        {/* Autor y fecha */}
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold">
             AM
           </div>
-
           <div>
             <p className="font-semibold text-secondary">Ana Martínez</p>
             <p className="text-xs text-gray-400">8 de octubre de 2026</p>
           </div>
         </div>
 
-        {/* Contenido de la publicación */}
         <h3 className="text-lg font-bold text-secondary mb-2">
           ¡Un mes llevando una vida más saludable! 🥗
         </h3>
@@ -228,20 +223,57 @@ export function CommunityPage() {
           ¡Mucho ánimo a todos los que estáis empezando!
         </p>
 
-        {/* Estadísticas visuales */}
         <div className="flex items-center gap-5 mt-5 pt-4 border-t border-gray-100">
           <span className="text-sm text-gray-500">
             ❤️ 12 Me gusta
           </span>
-
           <span className="text-sm text-gray-500">
             💬 3 comentarios
           </span>
         </div>
-
       </article>
-          {/* DESCOMENTAR LO DE ABAJO PARA QUE SE MUESTREN LAS PUBLICACIONES PUBLICADAS */}
-      {/* <PostList posts={communityPosts} users={users} /> */}
+
+      {/* HU-05: Modal estilizado de confirmación para abandonar la comunidad */}
+      {showLeaveModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl flex flex-col gap-4 border border-gray-100">
+            
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h2 className="text-lg font-bold text-secondary">
+                Abandonar comunidad
+              </h2>
+            </div>
+
+            <p className="text-sm text-gray-600 leading-relaxed">
+              ¿Estás seguro de que deseas salir de <span className="font-semibold text-secondary">{community.name}</span>? 
+              Dejarás de tener acceso a las publicaciones exclusivas y funciones para miembros.
+            </p>
+
+            <div className="flex justify-end gap-3 mt-2">
+              <button
+                type="button"
+                onClick={() => setShowLeaveModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmLeave}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 active:scale-95 rounded-lg transition-all cursor-pointer shadow-sm shadow-red-200"
+              >
+                Sí, abandonar
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </main>
   );
