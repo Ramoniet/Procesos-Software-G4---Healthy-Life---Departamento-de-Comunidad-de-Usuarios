@@ -1,0 +1,18 @@
+[
+  {
+    "id": "p1",
+    "communityId": "c1",
+    "authorId": "u1",
+    "title": "¡Mi primer mes comiendo saludable!",
+    "content": "Llevo un mes mejorando mi alimentación y me encuentro mucho mejor.",
+    "createdAt": "2026-10-07T10:30:00Z"
+  },
+  {
+    "id": "p2",
+    "communityId": "c1",
+    "authorId": "u2",
+    "title": "¿Qué desayunáis antes de entrenar?",
+    "content": "Estoy buscando ideas de desayunos saludables.",
+    "createdAt": "2026-10-08T09:00:00Z"
+  }
+]

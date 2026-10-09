@@ -1,6 +1,10 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../app/AppContext.tsx';
 import { TOPICS } from '../utils/topics.ts';
+//HU-12
+import { PostList } from '../components/PostList.tsx';
+import initialPosts from '../data/posts.json';
+import type { Post } from '../types/index.ts';
 
 export function CommunityPage() {
   const { id } = useParams<{ id: string }>();
@@ -8,6 +12,10 @@ export function CommunityPage() {
   const { communities, currentUser, users, joinCommunity, deleteCommunity } = useApp();
 
   const community = communities.find((c) => c.id === id);
+  //HU-12
+  const communityPosts = (initialPosts as Post[]).filter(
+    (post) => post.communityId === id
+  );
 
   // Comunidad no encontrada (o eliminada)
   if (!community) {
@@ -28,7 +36,7 @@ export function CommunityPage() {
     );
   }
 
-  const isAdmin  = community.adminId === currentUser.id;
+  const isAdmin = community.adminId === currentUser.id;
   const isMember = community.memberIds.includes(currentUser.id);
   const adminUser = users.find((u) => u.id === community.adminId);
   const topicMeta = TOPICS[community.topic];
@@ -181,7 +189,7 @@ export function CommunityPage() {
         )}
 
         {/* Feed vacío */}
-        <div className="flex flex-col items-center justify-center gap-3 py-16 border-2 border-dashed border-gray-200 rounded-2xl text-center">
+        {/* <div className="flex flex-col items-center justify-center gap-3 py-16 border-2 border-dashed border-gray-200 rounded-2xl text-center">
           <span className="text-4xl">📝</span>
           <p className="text-gray-400 font-medium text-sm">
             Aún no hay publicaciones en esta comunidad.
@@ -189,8 +197,51 @@ export function CommunityPage() {
           <p className="text-gray-300 text-xs">
             Las publicaciones aparecerán aquí cuando se implementen.
           </p>
-        </div>
+        </div> */}
       </div>
+
+      {/* HU-12 Publicación de prueba */}
+      <article className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+
+        {/* Autor y fecha */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold">
+            AM
+          </div>
+
+          <div>
+            <p className="font-semibold text-secondary">Ana Martínez</p>
+            <p className="text-xs text-gray-400">8 de octubre de 2026</p>
+          </div>
+        </div>
+
+        {/* Contenido de la publicación */}
+        <h3 className="text-lg font-bold text-secondary mb-2">
+          ¡Un mes llevando una vida más saludable! 🥗
+        </h3>
+
+        <p className="text-sm text-gray-600 leading-relaxed">
+          ¡Hola a todos! Quería compartir un pequeño logro con vosotros.
+          Llevo un mes mejorando mi alimentación y haciendo ejercicio
+          regularmente. Al principio me costaba mantener la constancia,
+          pero poco a poco estoy consiguiendo crear hábitos saludables.
+          ¡Mucho ánimo a todos los que estáis empezando!
+        </p>
+
+        {/* Estadísticas visuales */}
+        <div className="flex items-center gap-5 mt-5 pt-4 border-t border-gray-100">
+          <span className="text-sm text-gray-500">
+            ❤️ 12 Me gusta
+          </span>
+
+          <span className="text-sm text-gray-500">
+            💬 3 comentarios
+          </span>
+        </div>
+
+      </article>
+          {/* DESCOMENTAR LO DE ABAJO PARA QUE SE MUESTREN LAS PUBLICACIONES PUBLICADAS */}
+      {/* <PostList posts={communityPosts} users={users} /> */}
 
     </main>
   );

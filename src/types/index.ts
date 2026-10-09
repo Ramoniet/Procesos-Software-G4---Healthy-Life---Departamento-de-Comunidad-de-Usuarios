@@ -22,3 +22,12 @@ export interface Community {
   memberIds: string[]; // IDs de todos los miembros (incluido el admin)
   createdAt: string;   // ISO date string
 }
+//HU-12
+export interface Post {
+  id: string;
+  communityId: string;
+  authorId: string;
+  title: string;
+  content: string;
+  createdAt: string;
+}
