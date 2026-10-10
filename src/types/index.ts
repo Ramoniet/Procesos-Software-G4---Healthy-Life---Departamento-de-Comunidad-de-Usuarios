@@ -31,3 +31,10 @@ export interface Post {
   content: string;
   createdAt: string;
 }
+//HU-03
+export interface JoinRequest {
+  id: string;
+  communityId: string;
+  userId: string;   // Usuario que solicita unirse a la comunidad
+  createdAt: string; // ISO date string
+}
