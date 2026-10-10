@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import type { User, Community, CommunityTopic } from '../types/index.ts';
+import type { User, Community, CommunityTopic, JoinRequest } from '../types/index.ts';
 import initialUsers from '../data/users.json';
 import initialCommunities from '../data/communities.json';
 
@@ -17,6 +17,10 @@ interface AppContextValue {
   joinCommunity: (communityId: string) => void;
   leaveCommunity: (communityId: string) => void;
   deleteCommunity: (communityId: string) => void;
+
+  //HU-03 — Solicitudes de unión a comunidades
+  joinRequests: JoinRequest[];
+  requestJoin: (communityId: string) => void;
 }
 
 // ── Creación del contexto ──────────────────────────────────────────────────
@@ -30,6 +34,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [communities, setCommunities] = useState<Community[]>(
     initialCommunities as Community[],
   );
+  //HU-03
+  const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
 
   // El usuario "logueado" — empieza siendo el primero del JSON
   const [currentUserId, setCurrentUserId] = useState<string>(initialUsers[0].id);
@@ -96,11 +102,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCommunities((prev) => prev.filter((c) => c.id !== communityId));
   };
 
+  /**
+   * HU-03 — Registra la solicitud de unión del usuario actual a una comunidad.
+   * La solicitud queda registrada (pendiente) y es visible para el admin de la
+   * comunidad. No modifica los miembros: aceptar/rechazar será HU-04.
+   */
+  const requestJoin = (communityId: string) => {
+    const community = communities.find((c) => c.id === communityId);
+    if (!community) return;
+
+    // Regla: no se puede solicitar unión a una comunidad de la que ya se es miembro
+    if (community.memberIds.includes(currentUser.id)) return;
+
+    // Regla: no duplicar solicitudes pendientes del mismo usuario
+    const alreadyRequested = joinRequests.some(
+      (r) => r.communityId === communityId && r.userId === currentUser.id,
+    );
+    if (alreadyRequested) return;
+
+    const newRequest: JoinRequest = {
+      id: `jr${Date.now()}`,
+      communityId,
+      userId: currentUser.id,
+      createdAt: new Date().toISOString(),
+    };
+
+    setJoinRequests((prev) => [...prev, newRequest]);
+  };
+
   return (
     <AppContext.Provider
       value={{
         users, currentUser, switchUser,
         communities, createCommunity, joinCommunity, leaveCommunity, deleteCommunity,
+        joinRequests, requestJoin,
       }}
     >
       {children}
