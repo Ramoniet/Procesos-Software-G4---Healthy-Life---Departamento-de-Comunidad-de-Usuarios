@@ -1,1 +1,22 @@
-[]
+[
+  {
+    "id": "c1",
+    "name": "Vida Saludable y Nutrición",
+    "description": "Comunidad para compartir hábitos de alimentación sana, recetas y dudas sobre nutrición deportiva.",
+    "topic": "nutricion",
+    "members": 2,
+    "adminId": "u1",
+    "memberIds": ["u1", "u2"],
+    "createdAt": "2026-10-01T10:00:00Z"
+  },
+  {
+    "id": "c2",
+    "name": "Hábitos Saludables URJC",
+    "description": "Grupo para compartir nuestros logros diarios, rutinas y motivación entre compañeros.",
+    "topic": "nutricion",
+    "members": 2,
+    "adminId": "u2",
+    "memberIds": ["u2", "u3"],
+    "createdAt": "2026-10-03T16:30:00Z"
+  }
+]
