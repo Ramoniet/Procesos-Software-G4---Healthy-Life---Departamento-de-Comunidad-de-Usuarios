@@ -2,26 +2,37 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../app/AppContext.tsx';
 import { TOPICS } from '../utils/topics.ts';
-//HU-12
+// HU-12 y HU-13
 import { PostList } from '../components/PostList.tsx';
-import initialPosts from '../data/posts.json';
-import type { Post } from '../types/index.ts';
+import { CreatePostForm } from '../components/CreatePostForm.tsx';
 
 export function CommunityPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
-  // HU-05: Se extrae leaveCommunity del contexto
-  const { communities, currentUser, users, joinRequests, requestJoin, joinCommunity, leaveCommunity, deleteCommunity } = useApp();
+  // Se extraen posts y createPost del contexto (HU-12 y HU-13)
+  const {
+    communities,
+    currentUser,
+    users,
+    joinRequests,
+    requestJoin,
+    leaveCommunity,
+    deleteCommunity,
+    posts,
+    createPost,
+  } = useApp();
 
   // HU-05: Estado para controlar la visibilidad del modal de confirmación
   const [showLeaveModal, setShowLeaveModal] = useState(false);
 
+  // HU-13: Estado para controlar la visibilidad del modal de nueva publicación
+  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
+
   const community = communities.find((c) => c.id === id);
-  //HU-12
-  const communityPosts = (initialPosts as Post[]).filter(
-    (post) => post.communityId === id
-  );
+
+  // HU-12: Filtramos las publicaciones de esta comunidad desde el contexto global
+  const communityPosts = posts.filter((post) => post.communityId === id);
 
   // Comunidad no encontrada (o eliminada)
   if (!community) {
@@ -47,11 +58,11 @@ export function CommunityPage() {
   const adminUser = users.find((u) => u.id === community.adminId);
   const topicMeta = TOPICS[community.topic];
 
-  //HU-03 — Solicitudes de unión registradas para esta comunidad
+  // HU-03 — Solicitudes de unión registradas para esta comunidad
   const communityJoinRequests = joinRequests.filter((r) => r.communityId === community.id);
   const hasJoinRequest = communityJoinRequests.some((r) => r.userId === currentUser.id);
 
-  //HU-03 — La solicitud solo se registra si el usuario NO es miembro todavía
+  // HU-03 — La solicitud solo se registra si el usuario NO es miembro todavía
   const handleJoin = () => {
     if (isMember || hasJoinRequest) return;
     requestJoin(community.id);
@@ -66,6 +77,12 @@ export function CommunityPage() {
   const handleDelete = () => {
     deleteCommunity(community.id);
     navigate('/');
+  };
+
+  // HU-13: Función que registra el nuevo logro y cierra el modal
+  const handleCreatePost = (title: string, content: string) => {
+    createPost(community.id, title, content);
+    setShowCreatePostModal(false);
   };
 
   return (
@@ -246,56 +263,42 @@ export function CommunityPage() {
         </div>
       )}
 
-      {/* ── Zona reservada para publicaciones ── */}
+      {/* ── Zona de publicaciones (HU-12 y HU-13) ── */}
       <div className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold text-secondary">Publicaciones</h2>
 
-        {/* Placeholder de "nueva publicación" — solo para miembros */}
+        {/* HU-13: Botón para publicar logro — solo visible si el usuario es miembro del foro */}
         {isMember && (
-          <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-xl p-4 shadow-sm opacity-60 cursor-not-allowed select-none">
+          <div
+            onClick={() => setShowCreatePostModal(true)}
+            className="flex items-center gap-3 bg-white border border-gray-200 hover:border-primary/40 rounded-xl p-4 shadow-sm cursor-pointer transition-all group"
+          >
             <div className="w-9 h-9 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold shrink-0">
               {currentUser.name.split(' ').map((n) => n[0]).join('')}
             </div>
-            <div className="flex-1 bg-gray-100 rounded-lg px-4 py-2.5 text-sm text-gray-400">
-              Comparte algo con la comunidad… (próximamente)
+            <div className="flex-1 bg-gray-100 group-hover:bg-gray-200/70 rounded-lg px-4 py-2.5 text-sm text-gray-500 transition-colors">
+              Comparte un logro con la comunidad…
             </div>
+            <button
+              type="button"
+              className="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg group-hover:bg-primary/85 transition-colors cursor-pointer"
+            >
+              Publicar logro
+            </button>
           </div>
         )}
+
+        {/* HU-12 y HU-13: Listado dinámico de publicaciones del feed */}
+        <PostList posts={communityPosts} users={users} />
       </div>
 
-      {/* HU-12 Publicación de prueba */}
-      <article className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold">
-            AM
-          </div>
-          <div>
-            <p className="font-semibold text-secondary">Ana Martínez</p>
-            <p className="text-xs text-gray-400">8 de octubre de 2026</p>
-          </div>
-        </div>
-
-        <h3 className="text-lg font-bold text-secondary mb-2">
-          ¡Un mes llevando una vida más saludable! 🥗
-        </h3>
-
-        <p className="text-sm text-gray-600 leading-relaxed">
-          ¡Hola a todos! Quería compartir un pequeño logro con vosotros.
-          Llevo un mes mejorando mi alimentación y haciendo ejercicio
-          regularmente. Al principio me costaba mantener la constancia,
-          pero poco a poco estoy consiguiendo crear hábitos saludables.
-          ¡Mucho ánimo a todos los que estáis empezando!
-        </p>
-
-        <div className="flex items-center gap-5 mt-5 pt-4 border-t border-gray-100">
-          <span className="text-sm text-gray-500">
-            ❤️ 12 Me gusta
-          </span>
-          <span className="text-sm text-gray-500">
-            💬 3 comentarios
-          </span>
-        </div>
-      </article>
+      {/* HU-13: Modal para crear una nueva publicación/logro */}
+      {showCreatePostModal && (
+        <CreatePostForm
+          onSubmit={handleCreatePost}
+          onClose={() => setShowCreatePostModal(false)}
+        />
+      )}
 
       {/* HU-05: Modal estilizado de confirmación para abandonar la comunidad */}
       {showLeaveModal && (

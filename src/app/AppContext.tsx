@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import type { User, Community, CommunityTopic, JoinRequest } from '../types/index.ts';
+import type { User, Community, CommunityTopic, JoinRequest, Post } from '../types/index.ts';
 import initialUsers from '../data/users.json';
 import initialCommunities from '../data/communities.json';
+import initialPosts from '../data/posts.json';
 
 // ── Tipos del contexto ──────────────────────────────────────────────────────
 
@@ -18,9 +19,13 @@ interface AppContextValue {
   leaveCommunity: (communityId: string) => void;
   deleteCommunity: (communityId: string) => void;
 
-  //HU-03 — Solicitudes de unión a comunidades
+  // HU-03 — Solicitudes de unión a comunidades
   joinRequests: JoinRequest[];
   requestJoin: (communityId: string) => void;
+
+  // HU-12 y HU-13 — Publicaciones / Logros del feed
+  posts: Post[];
+  createPost: (communityId: string, title: string, content: string) => void;
 }
 
 // ── Creación del contexto ──────────────────────────────────────────────────
@@ -34,8 +39,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [communities, setCommunities] = useState<Community[]>(
     initialCommunities as Community[],
   );
-  //HU-03
+  // HU-03
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
+  // HU-12 y HU-13
+  const [posts, setPosts] = useState<Post[]>(initialPosts as Post[]);
 
   // El usuario "logueado" — empieza siendo el primero del JSON
   const [currentUserId, setCurrentUserId] = useState<string>(initialUsers[0].id);
@@ -104,17 +111,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   /**
    * HU-03 — Registra la solicitud de unión del usuario actual a una comunidad.
-   * La solicitud queda registrada (pendiente) y es visible para el admin de la
-   * comunidad. No modifica los miembros: aceptar/rechazar será HU-04.
    */
   const requestJoin = (communityId: string) => {
     const community = communities.find((c) => c.id === communityId);
     if (!community) return;
 
-    // Regla: no se puede solicitar unión a una comunidad de la que ya se es miembro
     if (community.memberIds.includes(currentUser.id)) return;
 
-    // Regla: no duplicar solicitudes pendientes del mismo usuario
     const alreadyRequested = joinRequests.some(
       (r) => r.communityId === communityId && r.userId === currentUser.id,
     );
@@ -130,12 +133,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setJoinRequests((prev) => [...prev, newRequest]);
   };
 
+  /**
+   * HU-13 — Publicar logros propios en el feed.
+   * Verifica que el usuario forme parte del foro/comunidad y añade la nueva
+   * publicación al principio del feed para que se vea inmediatamente.
+   */
+  const createPost = (communityId: string, title: string, content: string) => {
+    const community = communities.find((c) => c.id === communityId);
+    if (!community) return;
+
+    // Criterio de aceptación: Dado que el usuario forma parte del foro
+    if (!community.memberIds.includes(currentUser.id)) return;
+
+    const newPost: Post = {
+      id: `p${Date.now()}`,
+      communityId,
+      authorId: currentUser.id,
+      title: title.trim(),
+      content: content.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    // Añadimos el nuevo logro al inicio para que aparezca el primero en el feed
+    setPosts((prev) => [newPost, ...prev]);
+  };
+
   return (
     <AppContext.Provider
       value={{
         users, currentUser, switchUser,
         communities, createCommunity, joinCommunity, leaveCommunity, deleteCommunity,
         joinRequests, requestJoin,
+        posts, createPost,
       }}
     >
       {children}
