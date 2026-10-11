@@ -16,5 +16,11 @@
     "name": "Laura Pérez",
     "email": "laura@gmail.com",
     "role": "user"
+  },
+    {
+    "id": "u4",
+    "name": "Lucille Pacheco",
+    "email": "lucille@gmail.com",
+    "role": "user"
   }
 ]

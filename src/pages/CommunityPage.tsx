@@ -21,6 +21,8 @@ export function CommunityPage() {
     deleteCommunity,
     posts,
     createPost,
+    acceptJoinRequest, 
+    rejectJoinRequest, 
   } = useApp();
 
   // HU-05: Estado para controlar la visibilidad del modal de confirmación
@@ -253,9 +255,20 @@ export function CommunityPage() {
                       </span>
                     </div>
                   </div>
-                  <span className="text-xs font-semibold text-amber-700 bg-amber-100 rounded-full px-3 py-1 shrink-0">
-                    Pendiente
-                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => acceptJoinRequest(request.id, community.id, request.userId)}
+                      className="px-3 py-1.5 text-xs font-semibold text-white bg-green-600 hover:bg-green-700 active:scale-95 rounded-lg transition-all cursor-pointer shadow-sm"
+                    >
+                      Aceptar
+                    </button>
+                    <button
+                      onClick={() => rejectJoinRequest(request.id)}
+                      className="px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 active:scale-95 rounded-lg transition-all cursor-pointer"
+                    >
+                      Rechazar
+                    </button>
+                  </div>
                 </li>
               );
             })}

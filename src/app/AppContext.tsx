@@ -23,6 +23,11 @@ interface AppContextValue {
   joinRequests: JoinRequest[];
   requestJoin: (communityId: string) => void;
 
+  //HU-04 - Acceptar o rechazar solicitudes
+  acceptJoinRequest: (requestId: string, communityId: string, userId: string) => void;
+  rejectJoinRequest: (requestId: string) => void;
+
+
   // HU-12 y HU-13 — Publicaciones / Logros del feed
   posts: Post[];
   createPost: (communityId: string, title: string, content: string) => void;
@@ -109,6 +114,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setCommunities((prev) => prev.filter((c) => c.id !== communityId));
   };
 
+
   /**
    * HU-03 — Registra la solicitud de unión del usuario actual a una comunidad.
    */
@@ -132,6 +138,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     setJoinRequests((prev) => [...prev, newRequest]);
   };
+
+  /**
+   * HU-04 - Acceptar o rechazar solicitudes en la communidad
+   */
+  /**Acceptar miembros y quitar la solicitud de JoinRequests */
+
+  const acceptJoinRequest = (requestId: string, communityId: string, userId: string) => {
+    const targetCommunity = communities.find((c) => c.id === communityId);
+    
+    // Prueba : la communidad existe y estamos el admin
+    if (!targetCommunity || targetCommunity.adminId !== currentUser.id) return;
+
+    setCommunities((prev) =>
+      prev.map((c) => {
+        if (c.id === communityId) {
+          return {
+            ...c,
+            members: c.members + 1,
+            memberIds: [...c.memberIds, userId],
+          };
+        }
+        return c;
+      })
+    );
+    setJoinRequests((prev) => prev.filter((r) => r.id !== requestId));
+  };
+
+  /** Rechazar una solicitud ; simple quita la solicitud de JoinRequest */
+  const rejectJoinRequest = (requestId: string) => {
+    const request = joinRequests.find((r) => r.id === requestId);
+    if (!request) return;
+
+    const targetCommunity = communities.find((c) => c.id === request.communityId);
+
+    // Prueba : la communidad existe y estamos el admin
+    if (!targetCommunity || targetCommunity.adminId !== currentUser.id) return;
+
+    setJoinRequests((prev) => prev.filter((r) => r.id !== requestId));
+  };
+
 
   /**
    * HU-13 — Publicar logros propios en el feed.
@@ -165,6 +211,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         communities, createCommunity, joinCommunity, leaveCommunity, deleteCommunity,
         joinRequests, requestJoin,
         posts, createPost,
+        acceptJoinRequest,rejectJoinRequest,
       }}
     >
       {children}
