@@ -1,32 +1,51 @@
-# React + TypeScript + Vite
+# Healthy Life — Comunidad de Usuarios
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Proyecto desarrollado para la asignatura **Procesos de Software** de la Universidad Rey Juan Carlos.
 
-Currently, two official plugins are available:
+## Equipo 4 — Comunidad de Usuarios
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+El módulo de Comunidad de Usuarios forma parte de la plataforma **Healthy Life** y tiene como objetivo aumentar la motivación y la interacción social entre los usuarios mediante comunidades, retos colectivos, logros y un feed de actividad.
 
-## React Compiler
+## Funcionalidades del Sprint 1
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Durante el Sprint 1 se han trabajado las siguientes historias de usuario:
 
-## Expanding the Oxlint configuration
+- **HU-01:** Crear comunidad temática.
+- **HU-03:** Solicitar unirse a una comunidad.
+- **HU-04:** Aceptar o rechazar solicitudes de acceso.
+- **HU-05:** Abandonar una comunidad.
+- **HU-12:** Visualizar publicaciones de la comunidad.
+- **HU-13:** Publicar logros propios en el feed.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Tecnologías utilizadas
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- React Router
+- Docker
+- Docker Compose
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Estructura principal del proyecto
+
+- `src/components`: componentes reutilizables de la interfaz.
+- `src/pages`: pantallas principales de la aplicación.
+- `src/app`: estado global y lógica compartida.
+- `src/data`: datos simulados utilizados durante el Sprint 1.
+- `src/types`: tipos y modelos del dominio.
+- `src/api`: espacio destinado a la integración con servicios externos.
+- `src/hooks`: hooks reutilizables de React.
+
+## Ejecución en local
+
+### Requisitos
+
+- Node.js
+- npm
+
+### Instalación
+
+```bash
+npm install
+npm run dev
