@@ -37,6 +37,25 @@ Durante el Sprint 1 se han trabajado las siguientes historias de usuario:
 - `src/api`: espacio destinado a la integración con servicios externos.
 - `src/hooks`: hooks reutilizables de React.
 
+## Mocks de interoperabilidad
+
+Estos JSON son mocks de interoperabilidad para Sprint 1. Sirven para acordar
+formatos de intercambio entre módulos mientras el proyecto utiliza datos
+simulados.
+
+Equipos relacionados:
+
+- Equipo 1 – Login / Usuarios
+- Equipo 2 – Hábitos
+- Equipo 5 – Rutinas
+
+Notas:
+
+- Los identificadores se manejan como strings.
+- Las fechas usan formato ISO 8601.
+- `id_user` y `token` se utilizarán cuando sea necesario identificar al usuario
+  autenticado.
+
 ## Ejecución en local
 
 ### Requisitos

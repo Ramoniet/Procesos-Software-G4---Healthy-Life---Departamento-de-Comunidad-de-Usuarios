@@ -1,0 +1,19 @@
+{
+  "entrada_desde_otros_modulos": {
+    "id_user": "u123",
+    "token": "token-demo-001",
+    "activity": {
+      "id_activity": "a45",
+      "activity_type": "running",
+      "activity_date": "2026-10-12",
+      "duration_minutes": 40
+    }
+  },
+  "salida_modulo_comunidad": {
+    "community_id": "c01",
+    "challenge_id": "ch03",
+    "user_id": "u123",
+    "progress": 4,
+    "target": 10
+  }
+}
