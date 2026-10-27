@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ComunityCard } from "./ComunityCard.tsx";
 import { CreateCommunityForm } from "./CreateCommunityForm.tsx";
@@ -13,6 +13,15 @@ export function CommunityList() {
   const [activeTopic, setActiveTopic] = useState<CommunityTopic | null>(null);
   const [showForm, setShowForm] = useState(false);
 
+  // Configuración de paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 6;
+
+  // Resetear a la página 1 cuando el usuario escribe o cambia de filtro
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, activeTopic]);
+
   const handleCreate = (name: string, description: string, topic: CommunityTopic) => {
     createCommunity(name, description, topic);
     setShowForm(false);
@@ -25,6 +34,13 @@ export function CommunityList() {
     const matchesTopic = activeTopic === null || c.topic === activeTopic;
     return matchesSearch && matchesTopic;
   });
+
+  // Lógica de recorte de array para la paginación
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedCommunities = filtered.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <section className="p-6">
@@ -78,21 +94,46 @@ export function CommunityList() {
         ))}
       </div>
 
-      {/* Grid de tarjetas */}
-      {filtered.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map((community) => (
-            <ComunityCard
-              key={community.id}
-              name={community.name}
-              description={community.description}
-              topic={community.topic}
-              members={community.members}
-              isAdmin={community.adminId === currentUser.id}
-              isMember={community.memberIds.includes(currentUser.id)}
-              onViewDetails={() => navigate(`/comunidad/${community.id}`)}
-            />
-          ))}
+      {/* Grid de tarjetas paginado */}
+      {paginatedCommunities.length > 0 ? (
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {paginatedCommunities.map((community) => (
+              <ComunityCard
+                key={community.id}
+                name={community.name}
+                description={community.description}
+                topic={community.topic}
+                members={community.members}
+                isAdmin={community.adminId === currentUser.id}
+                isMember={community.memberIds.includes(currentUser.id)}
+                onViewDetails={() => navigate(`/comunidad/${community.id}`)}
+              />
+            ))}
+          </div>
+
+          {/* Controles de Paginación */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-4 mt-4 border-t border-gray-100 pt-6">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 text-sm font-medium text-secondary border border-gray-200 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                Anterior
+              </button>
+              <span className="text-sm font-medium text-gray-500">
+                Página {currentPage} de {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 text-sm font-medium text-secondary border border-gray-200 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <p className="text-gray-400 text-center py-12">
