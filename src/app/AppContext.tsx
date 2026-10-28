@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import type { User, Community, CommunityTopic, JoinRequest, Post } from '../types/index.ts';
+import type { User, Community, CommunityTopic, JoinRequest, Post, FriendRequest } from '../types/index.ts';
 import initialUsers from '../data/users.json';
 import initialCommunities from '../data/communities.json';
 import initialPosts from '../data/posts.json';
@@ -31,6 +31,11 @@ interface AppContextValue {
   // HU-12 y HU-13 — Publicaciones / Logros del feed
   posts: Post[];
   createPost: (communityId: string, title: string, content: string) => void;
+
+  // HU-17 — Solicitudes de amistad entre miembros
+  friendRequests: FriendRequest[];
+  sendFriendRequest: (receiverId: string) => void;
+  cancelFriendRequest: (requestId: string) => void;
 }
 
 // ── Creación del contexto ──────────────────────────────────────────────────
@@ -48,6 +53,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   // HU-12 y HU-13
   const [posts, setPosts] = useState<Post[]>(initialPosts as Post[]);
+  // Solicitudes de amistad
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
 
   // El usuario "logueado" — empieza siendo el primero del JSON
   const [currentUserId, setCurrentUserId] = useState<string>(initialUsers[0].id);
@@ -204,6 +211,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPosts((prev) => [newPost, ...prev]);
   };
 
+  /**
+   * HU-17 — Enviar solicitud de amistad a otro miembro de la comunidad
+   */
+  const sendFriendRequest = (receiverId: string) => {
+    if (receiverId === currentUser.id) return;
+
+    // Verificar si ya existe una solicitud en cualquier sentido
+    const existing = friendRequests.some(
+      (r) =>
+        (r.senderId === currentUser.id && r.receiverId === receiverId) ||
+        (r.senderId === receiverId && r.receiverId === currentUser.id),
+    );
+    if (existing) return;
+
+    const newRequest: FriendRequest = {
+      id: `fr${Date.now()}`,
+      senderId: currentUser.id,
+      receiverId,
+      createdAt: new Date().toISOString(),
+    };
+
+    setFriendRequests((prev) => [...prev, newRequest]);
+  };
+
+  /**
+   * Cancelar una solicitud de amistad enviada
+   */
+  const cancelFriendRequest = (requestId: string) => {
+    setFriendRequests((prev) =>
+      prev.filter((r) => !(r.id === requestId && r.senderId === currentUser.id))
+    );
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -212,6 +252,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         joinRequests, requestJoin,
         posts, createPost,
         acceptJoinRequest,rejectJoinRequest,
+        friendRequests, sendFriendRequest, cancelFriendRequest,
       }}
     >
       {children}
