@@ -38,3 +38,11 @@ export interface JoinRequest {
   userId: string;   // Usuario que solicita unirse a la comunidad
   createdAt: string; // ISO date string
 }
+
+// HU-17 — Solicitudes de amistad entre miembros de la comunidad
+export interface FriendRequest {
+  id: string;
+  senderId: string;    // ID del usuario que envía la solicitud
+  receiverId: string;  // ID del usuario destinatario
+  createdAt: string;   // ISO date string
+}
