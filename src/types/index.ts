@@ -7,6 +7,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  friendIds: string[]; // HU-20 — IDs de los usuarios con los que tiene amistad ("Amigos")
 }
 
 // Temáticas de salud y bienestar disponibles en el prototipo
