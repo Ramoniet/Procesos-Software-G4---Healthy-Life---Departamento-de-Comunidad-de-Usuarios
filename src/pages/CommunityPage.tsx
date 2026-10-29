@@ -5,11 +5,15 @@ import { TOPICS } from '../utils/topics.ts';
 // HU-12 y HU-13
 import { PostList } from '../components/PostList.tsx';
 import { CreatePostForm } from '../components/CreatePostForm.tsx';
+import { CommunityMemberList } from '../components/CommunityMemberList.tsx';
 
 export function CommunityPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
+  // Pestaña activa: publicaciones o miembros (disponible para todos los usuarios)
+  const [activeTab, setActiveTab] = useState<'posts' | 'members'>('posts');
+
   // Se extraen posts y createPost del contexto (HU-12 y HU-13)
   const {
     communities,
@@ -140,12 +144,20 @@ export function CommunityPage() {
 
           {/* Stats */}
           <div className="flex flex-row sm:flex-col items-center sm:items-end gap-4 shrink-0">
-            <div className="flex items-center gap-2 bg-white/70 rounded-xl px-4 py-2 shadow-sm">
-              <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <button
+              onClick={() => setActiveTab('members')}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 shadow-sm transition-all cursor-pointer border ${
+                activeTab === 'members'
+                  ? 'bg-primary text-white border-primary'
+                  : 'bg-white/70 hover:bg-white text-primary border-transparent hover:border-primary/20'
+              }`}
+              title="Ver miembros de la comunidad"
+            >
+              <svg className={`w-4 h-4 ${activeTab === 'members' ? 'text-white' : 'text-primary'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span className="text-sm font-bold text-primary">{community.members} miembros</span>
-            </div>
+              <span className="text-sm font-bold">{community.members} miembros</span>
+            </button>
             {adminUser && (
               <div className="flex items-center gap-1.5 text-xs text-gray-500">
                 <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">
@@ -163,9 +175,13 @@ export function CommunityPage() {
             /* Vista: Admin */
             <>
               <button
-                disabled
-                title="Próximamente"
-                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-primary border-2 border-primary/30 bg-white/60 rounded-xl opacity-60 cursor-not-allowed"
+                onClick={() => setActiveTab('members')}
+                className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl transition-all cursor-pointer ${
+                  activeTab === 'members'
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'text-primary border-2 border-primary/30 bg-white/60 hover:bg-primary/10'
+                }`}
+                title="Ver y gestionar miembros de la comunidad"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -276,34 +292,85 @@ export function CommunityPage() {
         </div>
       )}
 
-      {/* ── Zona de publicaciones (HU-12 y HU-13) ── */}
-      <div className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold text-secondary">Publicaciones</h2>
-
-        {/* HU-13: Botón para publicar logro — solo visible si el usuario es miembro del foro */}
-        {isMember && (
-          <div
-            onClick={() => setShowCreatePostModal(true)}
-            className="flex items-center gap-3 bg-white border border-gray-200 hover:border-primary/40 rounded-xl p-4 shadow-sm cursor-pointer transition-all group"
+      {/* ── Pestañas de navegación de la comunidad (disponibles para todos los usuarios) ── */}
+      <div className="flex border-b border-gray-200 gap-2 sm:gap-6">
+        <button
+          onClick={() => setActiveTab('posts')}
+          className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
+            activeTab === 'posts'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-gray-500 hover:text-secondary'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+          </svg>
+          Publicaciones
+          <span
+            className={`rounded-full text-xs px-2 py-0.5 font-medium ${
+              activeTab === 'posts' ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600'
+            }`}
           >
-            <div className="w-9 h-9 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold shrink-0">
-              {currentUser.name.split(' ').map((n) => n[0]).join('')}
-            </div>
-            <div className="flex-1 bg-gray-100 group-hover:bg-gray-200/70 rounded-lg px-4 py-2.5 text-sm text-gray-500 transition-colors">
-              Comparte un logro con la comunidad…
-            </div>
-            <button
-              type="button"
-              className="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg group-hover:bg-primary/85 transition-colors cursor-pointer"
-            >
-              Publicar logro
-            </button>
-          </div>
-        )}
+            {communityPosts.length}
+          </span>
+        </button>
 
-        {/* HU-12 y HU-13: Listado dinámico de publicaciones del feed */}
-        <PostList posts={communityPosts} users={users} />
+        <button
+          onClick={() => setActiveTab('members')}
+          className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
+            activeTab === 'members'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-gray-500 hover:text-secondary'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Miembros
+          <span
+            className={`rounded-full text-xs px-2 py-0.5 font-medium ${
+              activeTab === 'members' ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600'
+            }`}
+          >
+            {community.memberIds.length}
+          </span>
+        </button>
       </div>
+
+      {/* ── Contenido de la pestaña activa ── */}
+      {activeTab === 'posts' ? (
+        /* ── Zona de publicaciones (HU-12 y HU-13) ── */
+        <div className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold text-secondary">Publicaciones</h2>
+
+          {/* HU-13: Botón para publicar logro — solo visible si el usuario es miembro del foro */}
+          {isMember && (
+            <div
+              onClick={() => setShowCreatePostModal(true)}
+              className="flex items-center gap-3 bg-white border border-gray-200 hover:border-primary/40 rounded-xl p-4 shadow-sm cursor-pointer transition-all group"
+            >
+              <div className="w-9 h-9 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-bold shrink-0">
+                {currentUser.name.split(' ').map((n) => n[0]).join('')}
+              </div>
+              <div className="flex-1 bg-gray-100 group-hover:bg-gray-200/70 rounded-lg px-4 py-2.5 text-sm text-gray-500 transition-colors">
+                Comparte un logro con la comunidad…
+              </div>
+              <button
+                type="button"
+                className="px-4 py-2 bg-primary text-white text-sm font-semibold rounded-lg group-hover:bg-primary/85 transition-colors cursor-pointer"
+              >
+                Publicar logro
+              </button>
+            </div>
+          )}
+
+          {/* HU-12 y HU-13: Listado dinámico de publicaciones del feed */}
+          <PostList posts={communityPosts} users={users} />
+        </div>
+      ) : (
+        /* ── Apartado para ver los miembros de la comunidad (disponible para todos) ── */
+        <CommunityMemberList community={community} users={users} />
+      )}
 
       {/* HU-13: Modal para crear una nueva publicación/logro */}
       {showCreatePostModal && (
