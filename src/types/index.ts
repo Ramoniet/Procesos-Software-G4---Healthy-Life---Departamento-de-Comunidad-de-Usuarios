@@ -46,3 +46,35 @@ export interface FriendRequest {
   receiverId: string;  // ID del usuario destinatario
   createdAt: string;   // ISO date string
 }
+
+// HU-07: Retos colectivos y entrenamientos (mock de integración)
+export type ActivityType = 'running' | 'cycling' | 'walking' | 'strength';
+
+export interface Challenge {
+  id: string;
+  communityId: string;
+  title: string;
+  description: string;
+  status: 'active' | 'completed';
+  activityTypes: ActivityType[];
+  target: number; // Número de entrenamientos compatibles necesarios
+}
+
+export interface ChallengeParticipation {
+  challengeId: string;
+  userId: string;
+  joinedAt: string; // ISO 8601; solo se cuentan entrenamientos posteriores
+}
+
+export interface Training {
+  id: string;
+  userId: string;
+  activityType: ActivityType;
+  activityDate: string; // ISO 8601
+  durationMinutes: number;
+}
+
+export type NewTraining = Omit<Training, 'id' | 'userId'>;
+
+// Datos que introduce un miembro al crear un reto en su comunidad.
+export type NewChallenge = Pick<Challenge, 'title' | 'description' | 'activityTypes' | 'target'>;

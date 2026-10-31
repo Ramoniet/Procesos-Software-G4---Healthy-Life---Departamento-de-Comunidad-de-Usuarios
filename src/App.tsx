@@ -4,6 +4,7 @@ import { Header } from './shared/components/Header.tsx';
 import { Footer } from './shared/components/Footer.tsx';
 import { CommunityList } from './components/CommunityList.tsx';
 import { CommunityPage } from './pages/CommunityPage.tsx';
+import { ChallengesPage } from './pages/ChallengesPage.tsx';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Routes>
             <Route path="/" element={<CommunityList />} />
             <Route path="/comunidad/:id" element={<CommunityPage />} />
+            <Route path="/retos" element={<ChallengesPage />} />
           </Routes>
           <Footer />
         </div>

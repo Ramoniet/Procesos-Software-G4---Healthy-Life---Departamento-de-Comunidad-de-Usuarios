@@ -1,12 +1,26 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import type { User, Community, CommunityTopic, JoinRequest, Post, FriendRequest } from '../types/index.ts';
+import type { User, Community, CommunityTopic, JoinRequest, Post, FriendRequest, Challenge, ChallengeParticipation, Training, NewTraining, NewChallenge } from '../types/index.ts';
 import initialUsers from '../data/users.json';
 import initialCommunities from '../data/communities.json';
 import initialPosts from '../data/posts.json';
+import initialChallenges from '../data/challenges.json';
+import initialParticipations from '../data/challengeParticipations.json';
+import initialTrainings from '../data/trainings.json';
+import { getCountedTrainings } from '../utils/challengeProgress.ts';
+import { usePersistentState } from '../hooks/usePersistentState.ts';
 
 // ── Tipos del contexto ──────────────────────────────────────────────────────
 
 interface AppContextValue {
+  // HU-07 — Inscripción y sincronización de entrenamientos (datos simulados)
+  challenges: Challenge[];
+  challengeParticipations: ChallengeParticipation[];
+  trainings: Training[];
+  joinChallenge: (challengeId: string) => void;
+  createChallenge: (communityId: string, details: NewChallenge) => boolean;
+  syncTraining: (training: Training) => void;
+  registerTraining: (training: NewTraining) => void;
+
   // Usuarios
   users: User[];
   currentUser: User;
@@ -55,6 +69,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [posts, setPosts] = useState<Post[]>(initialPosts as Post[]);
   // Solicitudes de amistad
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+
+  // HU-07: persistencia LOCAL para la demo; NO es una base de datos compartida.
+  const [challenges, setChallenges] = usePersistentState<Challenge[]>(
+    'healthy-life:hu07:challenges:v1', initialChallenges as Challenge[],
+  );
+  const [challengeParticipations, setChallengeParticipations] = usePersistentState<ChallengeParticipation[]>(
+    'healthy-life:hu07:participations:v1', initialParticipations as ChallengeParticipation[],
+  );
+  const [trainings, setTrainings] = usePersistentState<Training[]>(
+    'healthy-life:hu07:trainings:v1', initialTrainings as Training[],
+  );
 
   // El usuario "logueado" — empieza siendo el primero del JSON
   const [currentUserId, setCurrentUserId] = useState<string>(initialUsers[0].id);
@@ -244,10 +269,71 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  /** Crear un reto exclusivamente en una comunidad a la que pertenece el usuario. */
+  const createChallenge = (communityId: string, details: NewChallenge): boolean => {
+    const community = communities.find((item) => item.id === communityId);
+    const title = details.title.trim();
+    const description = details.description.trim();
+    const activities: NewChallenge['activityTypes'] = ['running', 'cycling', 'walking', 'strength'];
+    if (!community?.memberIds.includes(currentUser.id)) return false;
+    if (title.length < 3 || title.length > 80 || description.length < 10 || description.length > 300) return false;
+    if (!Number.isInteger(details.target) || details.target < 1 || details.target > 500) return false;
+    if (details.activityTypes.length !== 1 || !activities.includes(details.activityTypes[0])) return false;
+
+    const id = `ch-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const newChallenge: Challenge = {
+      id, communityId, title, description, status: 'active',
+      activityTypes: [...details.activityTypes], target: details.target,
+    };
+    setChallenges((prev) => [newChallenge, ...prev]);
+    // El creador participa desde el mismo momento de creación.
+    setChallengeParticipations((prev) => [...prev, {
+      challengeId: id, userId: currentUser.id, joinedAt: new Date().toISOString(),
+    }]);
+    return true;
+  };
+
+  /** CHLS-59 — Inscribir una sola vez al usuario en un reto activo. */
+  const joinChallenge = (challengeId: string) => {
+    const challenge = challenges.find((c) => c.id === challengeId);
+    if (!challenge || challenge.status !== 'active') return;
+    const community = communities.find((item) => item.id === challenge.communityId);
+    if (!community?.memberIds.includes(currentUser.id)) return;
+    if (getCountedTrainings(challenge, challengeParticipations, trainings).length >= challenge.target) return;
+    const joinedAt = new Date().toISOString();
+
+    setChallengeParticipations((prev) => {
+      if (prev.some((p) => p.challengeId === challengeId && p.userId === currentUser.id)) return prev;
+      return [...prev, { challengeId, userId: currentUser.id, joinedAt }];
+    });
+  };
+
+  /** CHLS-60 — Sincroniza entrenamientos por su ID estable (idempotente). */
+  const syncTraining = (training: Training) => {
+    if (!training.id.trim() || !users.some((user) => user.id === training.userId)) return;
+    if (!Number.isFinite(Date.parse(training.activityDate))) return;
+    if (!Number.isFinite(training.durationMinutes) || training.durationMinutes <= 0) return;
+
+    setTrainings((prev) => {
+      if (prev.some((activity) => activity.id === training.id)) return prev;
+      return [...prev, training];
+    });
+  };
+
+  /** Simulador local; el módulo de Rutinas llamará a syncTraining con su propio ID. */
+  const registerTraining = (training: NewTraining) => {
+    syncTraining({
+      id: `demo-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      userId: currentUser.id,
+      ...training,
+    });
+  };
+
   return (
     <AppContext.Provider
       value={{
         users, currentUser, switchUser,
+        challenges, challengeParticipations, trainings, createChallenge, joinChallenge, syncTraining, registerTraining,
         communities, createCommunity, joinCommunity, leaveCommunity, deleteCommunity,
         joinRequests, requestJoin,
         posts, createPost,
