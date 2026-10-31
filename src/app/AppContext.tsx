@@ -50,6 +50,10 @@ interface AppContextValue {
   friendRequests: FriendRequest[];
   sendFriendRequest: (receiverId: string) => void;
   cancelFriendRequest: (requestId: string) => void;
+
+  // HU-20 — Aceptar o rechazar solicitudes de amistad recibidas
+  acceptFriendRequest: (requestId: string) => void;
+  rejectFriendRequest: (requestId: string) => void;
 }
 
 // ── Creación del contexto ──────────────────────────────────────────────────
@@ -242,6 +246,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const sendFriendRequest = (receiverId: string) => {
     if (receiverId === currentUser.id) return;
 
+    // HU-20 — No se envía solicitud si ya se tiene amistad con el destinatario
+    if (currentUser.friendIds.includes(receiverId)) return;
+
     // Verificar si ya existe una solicitud en cualquier sentido
     const existing = friendRequests.some(
       (r) =>
@@ -327,6 +334,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
       userId: currentUser.id,
       ...training,
     });
+  /**
+   * HU-20 — Aceptar una solicitud de amistad recibida.
+   * Actualiza ambos perfiles a "Amigos" (se añaden mutuamente a friendIds)
+   * y elimina la solicitud de la lista de pendientes.
+   */
+  const acceptFriendRequest = (requestId: string) => {
+    const request = friendRequests.find((r) => r.id === requestId);
+    // Solo el destinatario de la solicitud puede aceptarla
+    if (!request || request.receiverId !== currentUser.id) return;
+
+    const { senderId, receiverId } = request;
+
+    setUsers((prev) =>
+      prev.map((u) => {
+        if (u.id === senderId && !u.friendIds.includes(receiverId)) {
+          return { ...u, friendIds: [...u.friendIds, receiverId] };
+        }
+        if (u.id === receiverId && !u.friendIds.includes(senderId)) {
+          return { ...u, friendIds: [...u.friendIds, senderId] };
+        }
+        return u;
+      }),
+    );
+
+    setFriendRequests((prev) => prev.filter((r) => r.id !== requestId));
+  };
+
+  /**
+   * HU-20 — Rechazar una solicitud de amistad recibida.
+   * La solicitud se elimina de la lista sin notificar al emisor.
+   */
+  const rejectFriendRequest = (requestId: string) => {
+    const request = friendRequests.find((r) => r.id === requestId);
+    // Solo el destinatario de la solicitud puede rechazarla
+    if (!request || request.receiverId !== currentUser.id) return;
+
+    setFriendRequests((prev) => prev.filter((r) => r.id !== requestId));
   };
 
   return (
@@ -339,6 +383,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         posts, createPost,
         acceptJoinRequest,rejectJoinRequest,
         friendRequests, sendFriendRequest, cancelFriendRequest,
+        acceptFriendRequest, rejectFriendRequest,
       }}
     >
       {children}

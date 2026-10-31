@@ -105,6 +105,11 @@ export function CommunityMemberList({ community, users }: CommunityMemberListPro
               (r) => r.senderId === member.id && r.receiverId === currentUser.id,
             );
 
+            // HU-20 — Amistad confirmada entre el usuario actual y este miembro
+            const areFriends =
+              currentUser.friendIds.includes(member.id) &&
+              member.friendIds.includes(currentUser.id);
+
             return (
               <div
                 key={member.id}
@@ -142,6 +147,24 @@ export function CommunityMemberList({ community, users }: CommunityMemberListPro
                   {isCurrentUser ? (
                     <span className="text-xs text-gray-400 italic px-2">
                       Tu perfil
+                    </span>
+                  ) : areFriends ? (
+                    /* HU-20 — Amistad aceptada: ambos perfiles quedan como "Amigos" */
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg">
+                      <svg
+                        className="w-3.5 h-3.5 text-green-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      Amigos
                     </span>
                   ) : sentRequest ? (
                     /* Solicitud enviada por el usuario actual */

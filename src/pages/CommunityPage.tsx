@@ -7,6 +7,8 @@ import { PostList } from '../components/PostList.tsx';
 import { CreatePostForm } from '../components/CreatePostForm.tsx';
 import { CommunityMemberList } from '../components/CommunityMemberList.tsx';
 import { CommunityChallenges } from '../components/CommunityChallenges.tsx';
+// HU-20
+import { PendingFriendRequests } from '../components/PendingFriendRequests.tsx';
 
 export function CommunityPage() {
   const { id } = useParams<{ id: string }>();
@@ -294,6 +296,9 @@ export function CommunityPage() {
           </ul>
         </div>
       )}
+
+      {/* HU-20 — Solicitudes de amistad pendientes del usuario actual */}
+      <PendingFriendRequests />
 
       {/* ── Pestañas de navegación de la comunidad (disponibles para todos los usuarios) ── */}
       <div className="flex border-b border-gray-200 gap-2 sm:gap-6">
