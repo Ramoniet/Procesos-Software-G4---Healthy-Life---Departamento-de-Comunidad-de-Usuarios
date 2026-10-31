@@ -6,6 +6,7 @@ import { TOPICS } from '../utils/topics.ts';
 import { PostList } from '../components/PostList.tsx';
 import { CreatePostForm } from '../components/CreatePostForm.tsx';
 import { CommunityMemberList } from '../components/CommunityMemberList.tsx';
+import { CommunityChallenges } from '../components/CommunityChallenges.tsx';
 // HU-20
 import { PendingFriendRequests } from '../components/PendingFriendRequests.tsx';
 
@@ -14,7 +15,7 @@ export function CommunityPage() {
   const navigate = useNavigate();
   
   // Pestaña activa: publicaciones o miembros (disponible para todos los usuarios)
-  const [activeTab, setActiveTab] = useState<'posts' | 'members'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'members' | 'challenges'>('posts');
 
   // Se extraen posts y createPost del contexto (HU-12 y HU-13)
   const {
@@ -26,6 +27,7 @@ export function CommunityPage() {
     leaveCommunity,
     deleteCommunity,
     posts,
+    challenges,
     createPost,
     acceptJoinRequest, 
     rejectJoinRequest, 
@@ -41,6 +43,7 @@ export function CommunityPage() {
 
   // HU-12: Filtramos las publicaciones de esta comunidad desde el contexto global
   const communityPosts = posts.filter((post) => post.communityId === id);
+  const communityChallengeCount = challenges.filter((challenge) => challenge.communityId === id).length;
 
   // Comunidad no encontrada (o eliminada)
   if (!community) {
@@ -340,6 +343,21 @@ export function CommunityPage() {
             {community.memberIds.length}
           </span>
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('challenges')}
+          className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
+            activeTab === 'challenges'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-gray-500 hover:text-secondary'
+          }`}
+        >
+          <span aria-hidden="true">🏆</span>
+          Retos
+          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+            activeTab === 'challenges' ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600'
+          }`}>{communityChallengeCount}</span>
+        </button>
       </div>
 
       {/* ── Contenido de la pestaña activa ── */}
@@ -372,9 +390,12 @@ export function CommunityPage() {
           {/* HU-12 y HU-13: Listado dinámico de publicaciones del feed */}
           <PostList posts={communityPosts} users={users} />
         </div>
-      ) : (
-        /* ── Apartado para ver los miembros de la comunidad (disponible para todos) ── */
+      ) : activeTab === 'members' ? (
+        /* ── Apartado para ver los miembros de la comunidad ── */
         <CommunityMemberList community={community} users={users} />
+      ) : (
+        /* ── HU-07: retos colectivos de ESTA comunidad ── */
+        <CommunityChallenges communityId={community.id} />
       )}
 
       {/* HU-13: Modal para crear una nueva publicación/logro */}

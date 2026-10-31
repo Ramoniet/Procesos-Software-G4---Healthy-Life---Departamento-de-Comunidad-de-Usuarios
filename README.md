@@ -68,3 +68,17 @@ Notas:
 ```bash
 npm install
 npm run dev
+```
+
+## HU-07 — Retos dentro de las comunidades (CHLS-59 / CHLS-60)
+
+- Entra en **Comunidades → Ver detalles → Retos** para ver los retos de una comunidad.
+- Solo los **miembros de esa comunidad** pueden crear e inscribirse en retos.
+- **Crear reto colectivo** permite dar nombre, descripción, actividad y meta (número de sesiones).
+- El creador queda inscrito automáticamente. Los demás miembros pueden pulsar **Unirme al reto** una sola vez.
+- El progreso aumenta con entrenamientos compatibles, realizados después de la inscripción y sin duplicar IDs.
+- Los datos se guardan **en el navegador con `localStorage`**, no en una base de datos compartida.
+- El simulador de entrenamientos dentro de la pestaña facilita probar el cálculo mientras se integra el módulo real de Rutinas.
+- La vista global `/retos` se mantiene para explorar; la creación ocurre dentro de cada comunidad.
+- Instrucciones paso a paso: [`docs/HU-07-pruebas.md`](docs/HU-07-pruebas.md).
+- **Pendiente de acordar con el equipo:** unidad de progreso definitiva, autenticación e integración API/backend.

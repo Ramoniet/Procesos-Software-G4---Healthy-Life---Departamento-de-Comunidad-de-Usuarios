@@ -58,6 +58,12 @@ export function CommunityList() {
             className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 w-full sm:w-64"
           />
           <button
+            onClick={() => navigate('/retos')}
+            className="border border-primary text-primary hover:bg-primary/10 font-medium rounded-lg px-5 py-2 text-sm transition-colors cursor-pointer whitespace-nowrap"
+          >
+            Retos colectivos
+          </button>
+          <button
             onClick={() => setShowForm(true)}
             className="bg-primary hover:bg-primary/85 text-white font-medium rounded-lg px-5 py-2 text-sm transition-colors cursor-pointer whitespace-nowrap"
           >
