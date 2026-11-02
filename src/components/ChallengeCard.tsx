@@ -37,6 +37,11 @@ export function ChallengeCard({ challenge, showCommunityLink = false }: Challeng
         }`}>{isCompleted ? 'Finalizado' : 'Activo'}</span>
       </div>
       <p className="text-sm text-gray-600">{challenge.description}</p>
+      {challenge.deadline && (
+        <p className="text-sm text-gray-500">
+          Fecha límite: <time dateTime={challenge.deadline}>{new Date(`${challenge.deadline}T00:00:00`).toLocaleDateString('es-ES')}</time>
+        </p>
+      )}
       {showCommunityLink && community && (
         <Link className="text-sm text-primary hover:underline" to={`/comunidad/${community.id}`}>
           Comunidad: {community.name}

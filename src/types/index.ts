@@ -59,6 +59,7 @@ export interface Challenge {
   status: 'active' | 'completed';
   activityTypes: ActivityType[];
   target: number; // Número de entrenamientos compatibles necesarios
+  deadline?: string; // YYYY-MM-DD local; los retos anteriores a HU-06 pueden no tener fecha
 }
 
 export interface ChallengeParticipation {
@@ -77,5 +78,7 @@ export interface Training {
 
 export type NewTraining = Omit<Training, 'id' | 'userId'>;
 
-// Datos que introduce un miembro al crear un reto en su comunidad.
-export type NewChallenge = Pick<Challenge, 'title' | 'description' | 'activityTypes' | 'target'>;
+// Datos que introduce el administrador; la fecha es obligatoria en nuevos retos.
+export type NewChallenge = Pick<Challenge, 'title' | 'description' | 'activityTypes' | 'target'> & {
+  deadline: string;
+};
