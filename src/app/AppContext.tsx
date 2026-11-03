@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import type { User, Community, CommunityTopic, JoinRequest, Post, FriendRequest, Challenge, ChallengeParticipation, Training, NewTraining, NewChallenge } from '../types/index.ts';
+import type { User, Community, CommunityTopic, JoinRequest, Post, FriendRequest, Challenge, ChallengeParticipation, Training, NewTraining, NewChallenge, Comment} from '../types/index.ts';
 import initialUsers from '../data/users.json';
 import initialCommunities from '../data/communities.json';
 import initialPosts from '../data/posts.json';
@@ -47,6 +47,9 @@ interface AppContextValue {
   posts: Post[];
   createPost: (communityId: string, title: string, content: string) => void;
 
+  // HU-14 — Comentarios
+  comments: Comment[];
+  createComment: (postId: string, content: string) => void;
   // HU-17 — Solicitudes de amistad entre miembros
   friendRequests: FriendRequest[];
   sendFriendRequest: (receiverId: string) => void;
@@ -85,6 +88,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [trainings, setTrainings] = usePersistentState<Training[]>(
     'healthy-life:hu07:trainings:v1', initialTrainings as Training[],
   );
+
+  //HU14 
+  const [comments, setComments] = useState<Comment[]>([]);
 
   // El usuario "logueado" — empieza siendo el primero del JSON
   const [currentUserId, setCurrentUserId] = useState<string>(initialUsers[0].id);
@@ -241,6 +247,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPosts((prev) => [newPost, ...prev]);
   };
 
+  const createComment = (postId: string, content: string) => {
+    const post = posts.find((p) => p.id === postId);
+
+    if (!post) return;
+
+    const community = communities.find((c) => c.id === post.communityId);
+
+    if (!community) return;
+
+    if (!community.memberIds.includes(currentUser.id)) return;
+
+    const newComment: Comment = {
+      id: `cm${Date.now()}`,
+      postId,
+      authorId: currentUser.id,
+      content: content.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    setComments((prev) => [...prev, newComment]);
   /**
    * HU-17 — Enviar solicitud de amistad a otro miembro de la comunidad
    */
@@ -386,6 +412,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         communities, createCommunity, joinCommunity, leaveCommunity, deleteCommunity,
         joinRequests, requestJoin,
         posts, createPost,
+        comments, createComment,
         acceptJoinRequest,rejectJoinRequest,
         friendRequests, sendFriendRequest, cancelFriendRequest,
         acceptFriendRequest, rejectFriendRequest,
@@ -395,6 +422,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     </AppContext.Provider>
   );
 }
+
+
 
 // ── Hook de acceso ─────────────────────────────────────────────────────────
 

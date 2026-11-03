@@ -29,6 +29,8 @@ export function CommunityPage() {
     posts,
     challenges,
     createPost,
+    comments,
+    createComment,
     acceptJoinRequest, 
     rejectJoinRequest, 
   } = useApp();
@@ -323,6 +325,14 @@ export function CommunityPage() {
           </span>
         </button>
 
+        {/* HU-12 y HU-13: Listado dinámico de publicaciones del feed + hu14 commentarios*/}
+        <PostList
+          posts={communityPosts}
+          users={users}
+          comments={comments}
+          canComment={isMember}
+          onCreateComment={createComment}
+        />
         <button
           onClick={() => setActiveTab('members')}
           className={`pb-3 text-sm font-semibold flex items-center gap-2 border-b-2 transition-all cursor-pointer ${
