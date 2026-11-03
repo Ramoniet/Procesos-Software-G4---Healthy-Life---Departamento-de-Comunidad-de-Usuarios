@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import type { User, Community, CommunityTopic, JoinRequest, Post } from '../types/index.ts';
+import type { User, Community, CommunityTopic, JoinRequest, Post, Comment} from '../types/index.ts';
 import initialUsers from '../data/users.json';
 import initialCommunities from '../data/communities.json';
 import initialPosts from '../data/posts.json';
@@ -31,6 +31,10 @@ interface AppContextValue {
   // HU-12 y HU-13 — Publicaciones / Logros del feed
   posts: Post[];
   createPost: (communityId: string, title: string, content: string) => void;
+
+  // HU-14 — Comentarios
+  comments: Comment[];
+  createComment: (postId: string, content: string) => void;
 }
 
 // ── Creación del contexto ──────────────────────────────────────────────────
@@ -48,6 +52,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   // HU-12 y HU-13
   const [posts, setPosts] = useState<Post[]>(initialPosts as Post[]);
+
+  //HU14 
+  const [comments, setComments] = useState<Comment[]>([]);
 
   // El usuario "logueado" — empieza siendo el primero del JSON
   const [currentUserId, setCurrentUserId] = useState<string>(initialUsers[0].id);
@@ -204,6 +211,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPosts((prev) => [newPost, ...prev]);
   };
 
+  const createComment = (postId: string, content: string) => {
+    const post = posts.find((p) => p.id === postId);
+
+    if (!post) return;
+
+    const community = communities.find((c) => c.id === post.communityId);
+
+    if (!community) return;
+
+    if (!community.memberIds.includes(currentUser.id)) return;
+
+    const newComment: Comment = {
+      id: `cm${Date.now()}`,
+      postId,
+      authorId: currentUser.id,
+      content: content.trim(),
+      createdAt: new Date().toISOString(),
+    };
+
+    setComments((prev) => [...prev, newComment]);
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -211,6 +240,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         communities, createCommunity, joinCommunity, leaveCommunity, deleteCommunity,
         joinRequests, requestJoin,
         posts, createPost,
+        comments, createComment,
         acceptJoinRequest,rejectJoinRequest,
       }}
     >
@@ -218,6 +248,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     </AppContext.Provider>
   );
 }
+
+
 
 // ── Hook de acceso ─────────────────────────────────────────────────────────
 

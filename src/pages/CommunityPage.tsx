@@ -21,6 +21,8 @@ export function CommunityPage() {
     deleteCommunity,
     posts,
     createPost,
+    comments,
+    createComment,
     acceptJoinRequest, 
     rejectJoinRequest, 
   } = useApp();
@@ -301,8 +303,14 @@ export function CommunityPage() {
           </div>
         )}
 
-        {/* HU-12 y HU-13: Listado dinámico de publicaciones del feed */}
-        <PostList posts={communityPosts} users={users} />
+        {/* HU-12 y HU-13: Listado dinámico de publicaciones del feed + hu14 commentarios*/}
+        <PostList
+          posts={communityPosts}
+          users={users}
+          comments={comments}
+          canComment={isMember}
+          onCreateComment={createComment}
+        />
       </div>
 
       {/* HU-13: Modal para crear una nueva publicación/logro */}

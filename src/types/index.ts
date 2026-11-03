@@ -31,6 +31,16 @@ export interface Post {
   content: string;
   createdAt: string;
 }
+
+// HU-14 - Comentarios en publicaciones
+export interface Comment {
+  id: string;
+  postId: string;
+  authorId: string;
+  content: string;
+  createdAt: string;
+}
+
 //HU-03
 export interface JoinRequest {
   id: string;
