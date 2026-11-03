@@ -1,0 +1,5 @@
+[
+  { "id": "a1", "userId": "u2", "activityType": "running", "activityDate": "2026-10-12T08:00:00Z", "durationMinutes": 40 },
+  { "id": "a2", "userId": "u2", "activityType": "walking", "activityDate": "2026-10-14T09:30:00Z", "durationMinutes": 30 },
+  { "id": "a3", "userId": "u3", "activityType": "cycling", "activityDate": "2026-10-18T10:00:00Z", "durationMinutes": 45 }
+]

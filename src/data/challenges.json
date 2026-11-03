@@ -1,0 +1,29 @@
+[
+  {
+    "id": "ch1",
+    "communityId": "c2",
+    "title": "10 carreras en equipo",
+    "description": "Unid vuestros entrenamientos de carrera para llegar a diez sesiones entre todos.",
+    "status": "active",
+    "activityTypes": ["running"],
+    "target": 10
+  },
+  {
+    "id": "ch2",
+    "communityId": "c2",
+    "title": "8 salidas en bicicleta",
+    "description": "Completad ocho entrenamientos de ciclismo de forma colectiva.",
+    "status": "active",
+    "activityTypes": ["cycling"],
+    "target": 8
+  },
+  {
+    "id": "ch3",
+    "communityId": "c1",
+    "title": "Semana de fuerza (finalizado)",
+    "description": "Reto de demostración cerrado: ya no admite inscripciones.",
+    "status": "completed",
+    "activityTypes": ["strength"],
+    "target": 4
+  }
+]

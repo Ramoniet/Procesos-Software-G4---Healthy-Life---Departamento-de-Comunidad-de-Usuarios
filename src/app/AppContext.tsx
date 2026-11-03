@@ -1,12 +1,27 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
-import type { User, Community, CommunityTopic, JoinRequest, Post, Comment} from '../types/index.ts';
+import type { User, Community, CommunityTopic, JoinRequest, Post, FriendRequest, Challenge, ChallengeParticipation, Training, NewTraining, NewChallenge, Comment} from '../types/index.ts';
 import initialUsers from '../data/users.json';
 import initialCommunities from '../data/communities.json';
 import initialPosts from '../data/posts.json';
+import initialChallenges from '../data/challenges.json';
+import initialParticipations from '../data/challengeParticipations.json';
+import initialTrainings from '../data/trainings.json';
+import { getCountedTrainings } from '../utils/challengeProgress.ts';
+import { isFutureChallengeDeadline } from '../utils/challengeDeadline.ts';
+import { usePersistentState } from '../hooks/usePersistentState.ts';
 
 // ── Tipos del contexto ──────────────────────────────────────────────────────
 
 interface AppContextValue {
+  // HU-07 — Inscripción y sincronización de entrenamientos (datos simulados)
+  challenges: Challenge[];
+  challengeParticipations: ChallengeParticipation[];
+  trainings: Training[];
+  joinChallenge: (challengeId: string) => void;
+  createChallenge: (communityId: string, details: NewChallenge) => boolean;
+  syncTraining: (training: Training) => void;
+  registerTraining: (training: NewTraining) => void;
+
   // Usuarios
   users: User[];
   currentUser: User;
@@ -35,6 +50,14 @@ interface AppContextValue {
   // HU-14 — Comentarios
   comments: Comment[];
   createComment: (postId: string, content: string) => void;
+  // HU-17 — Solicitudes de amistad entre miembros
+  friendRequests: FriendRequest[];
+  sendFriendRequest: (receiverId: string) => void;
+  cancelFriendRequest: (requestId: string) => void;
+
+  // HU-20 — Aceptar o rechazar solicitudes de amistad recibidas
+  acceptFriendRequest: (requestId: string) => void;
+  rejectFriendRequest: (requestId: string) => void;
 }
 
 // ── Creación del contexto ──────────────────────────────────────────────────
@@ -52,6 +75,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
   // HU-12 y HU-13
   const [posts, setPosts] = useState<Post[]>(initialPosts as Post[]);
+  // Solicitudes de amistad
+  const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
+
+  // HU-07: persistencia LOCAL para la demo; NO es una base de datos compartida.
+  const [challenges, setChallenges] = usePersistentState<Challenge[]>(
+    'healthy-life:hu07:challenges:v1', initialChallenges as Challenge[],
+  );
+  const [challengeParticipations, setChallengeParticipations] = usePersistentState<ChallengeParticipation[]>(
+    'healthy-life:hu07:participations:v1', initialParticipations as ChallengeParticipation[],
+  );
+  const [trainings, setTrainings] = usePersistentState<Training[]>(
+    'healthy-life:hu07:trainings:v1', initialTrainings as Training[],
+  );
 
   //HU14 
   const [comments, setComments] = useState<Comment[]>([]);
@@ -231,17 +267,155 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
 
     setComments((prev) => [...prev, newComment]);
+  /**
+   * HU-17 — Enviar solicitud de amistad a otro miembro de la comunidad
+   */
+  const sendFriendRequest = (receiverId: string) => {
+    if (receiverId === currentUser.id) return;
+
+    // HU-20 — No se envía solicitud si ya se tiene amistad con el destinatario
+    if (currentUser.friendIds.includes(receiverId)) return;
+
+    // Verificar si ya existe una solicitud en cualquier sentido
+    const existing = friendRequests.some(
+      (r) =>
+        (r.senderId === currentUser.id && r.receiverId === receiverId) ||
+        (r.senderId === receiverId && r.receiverId === currentUser.id),
+    );
+    if (existing) return;
+
+    const newRequest: FriendRequest = {
+      id: `fr${Date.now()}`,
+      senderId: currentUser.id,
+      receiverId,
+      createdAt: new Date().toISOString(),
+    };
+
+    setFriendRequests((prev) => [...prev, newRequest]);
+  };
+
+  /**
+   * Cancelar una solicitud de amistad enviada
+   */
+  const cancelFriendRequest = (requestId: string) => {
+    setFriendRequests((prev) =>
+      prev.filter((r) => !(r.id === requestId && r.senderId === currentUser.id))
+    );
+  };
+
+  /** HU-06 — Solo el administrador de esta comunidad puede publicar un reto. */
+  const createChallenge = (communityId: string, details: NewChallenge): boolean => {
+    const community = communities.find((item) => item.id === communityId);
+    if (!community || community.adminId !== currentUser.id || !community.memberIds.includes(currentUser.id)) return false;
+    const title = details.title.trim();
+    const description = details.description.trim();
+    const activities: NewChallenge['activityTypes'] = ['running', 'cycling', 'walking', 'strength'];
+    if (title.length < 3 || title.length > 80 || description.length < 10 || description.length > 300) return false;
+    if (!Number.isInteger(details.target) || details.target < 1 || details.target > 500) return false;
+    if (details.activityTypes.length !== 1 || !activities.includes(details.activityTypes[0])) return false;
+    if (!isFutureChallengeDeadline(details.deadline)) return false;
+
+    const id = `ch-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    const newChallenge: Challenge = {
+      id, communityId, title, description, status: 'active',
+      activityTypes: [...details.activityTypes], target: details.target,
+      deadline: details.deadline,
+    };
+    setChallenges((prev) => [newChallenge, ...prev]);
+    // El creador participa desde el mismo momento de creación.
+    setChallengeParticipations((prev) => [...prev, {
+      challengeId: id, userId: currentUser.id, joinedAt: new Date().toISOString(),
+    }]);
+    return true;
+  };
+
+  /** CHLS-59 — Inscribir una sola vez al usuario en un reto activo. */
+  const joinChallenge = (challengeId: string) => {
+    const challenge = challenges.find((c) => c.id === challengeId);
+    if (!challenge || challenge.status !== 'active') return;
+    const community = communities.find((item) => item.id === challenge.communityId);
+    if (!community?.memberIds.includes(currentUser.id)) return;
+    if (getCountedTrainings(challenge, challengeParticipations, trainings).length >= challenge.target) return;
+    const joinedAt = new Date().toISOString();
+
+    setChallengeParticipations((prev) => {
+      if (prev.some((p) => p.challengeId === challengeId && p.userId === currentUser.id)) return prev;
+      return [...prev, { challengeId, userId: currentUser.id, joinedAt }];
+    });
+  };
+
+  /** CHLS-60 — Sincroniza entrenamientos por su ID estable (idempotente). */
+  const syncTraining = (training: Training) => {
+    if (!training.id.trim() || !users.some((user) => user.id === training.userId)) return;
+    if (!Number.isFinite(Date.parse(training.activityDate))) return;
+    if (!Number.isFinite(training.durationMinutes) || training.durationMinutes <= 0) return;
+
+    setTrainings((prev) => {
+      if (prev.some((activity) => activity.id === training.id)) return prev;
+      return [...prev, training];
+    });
+  };
+
+  /** Simulador local; el módulo de Rutinas llamará a syncTraining con su propio ID. */
+  const registerTraining = (training: NewTraining) => {
+    syncTraining({
+      id: `demo-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      userId: currentUser.id,
+      ...training,
+    });
+  };
+
+  /**
+   * HU-20 — Aceptar una solicitud de amistad recibida.
+   * Actualiza ambos perfiles a "Amigos" (se añaden mutuamente a friendIds)
+   * y elimina la solicitud de la lista de pendientes.
+   */
+  const acceptFriendRequest = (requestId: string) => {
+    const request = friendRequests.find((r) => r.id === requestId);
+    // Solo el destinatario de la solicitud puede aceptarla
+    if (!request || request.receiverId !== currentUser.id) return;
+
+    const { senderId, receiverId } = request;
+
+    setUsers((prev) =>
+      prev.map((u) => {
+        if (u.id === senderId && !u.friendIds.includes(receiverId)) {
+          return { ...u, friendIds: [...u.friendIds, receiverId] };
+        }
+        if (u.id === receiverId && !u.friendIds.includes(senderId)) {
+          return { ...u, friendIds: [...u.friendIds, senderId] };
+        }
+        return u;
+      }),
+    );
+
+    setFriendRequests((prev) => prev.filter((r) => r.id !== requestId));
+  };
+
+  /**
+   * HU-20 — Rechazar una solicitud de amistad recibida.
+   * La solicitud se elimina de la lista sin notificar al emisor.
+   */
+  const rejectFriendRequest = (requestId: string) => {
+    const request = friendRequests.find((r) => r.id === requestId);
+    // Solo el destinatario de la solicitud puede rechazarla
+    if (!request || request.receiverId !== currentUser.id) return;
+
+    setFriendRequests((prev) => prev.filter((r) => r.id !== requestId));
   };
 
   return (
     <AppContext.Provider
       value={{
         users, currentUser, switchUser,
+        challenges, challengeParticipations, trainings, createChallenge, joinChallenge, syncTraining, registerTraining,
         communities, createCommunity, joinCommunity, leaveCommunity, deleteCommunity,
         joinRequests, requestJoin,
         posts, createPost,
         comments, createComment,
         acceptJoinRequest,rejectJoinRequest,
+        friendRequests, sendFriendRequest, cancelFriendRequest,
+        acceptFriendRequest, rejectFriendRequest,
       }}
     >
       {children}

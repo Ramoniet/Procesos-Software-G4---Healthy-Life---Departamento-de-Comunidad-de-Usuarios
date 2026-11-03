@@ -3,24 +3,28 @@
     "id": "u1",
     "name": "Daniel Marcos",
     "email": "daniel@gmail.com",
-    "role": "user"
+    "role": "user",
+    "friendIds": []
   },
   {
     "id": "u2",
     "name": "Ramón García",
     "email": "ramon@gmail.com",
-    "role": "user"
+    "role": "user",
+    "friendIds": []
   },
   {
     "id": "u3",
     "name": "Laura Pérez",
     "email": "laura@gmail.com",
-    "role": "user"
+    "role": "user",
+    "friendIds": []
   },
     {
     "id": "u4",
     "name": "Lucille Pacheco",
     "email": "lucille@gmail.com",
-    "role": "user"
+    "role": "user",
+    "friendIds": []
   }
 ]
