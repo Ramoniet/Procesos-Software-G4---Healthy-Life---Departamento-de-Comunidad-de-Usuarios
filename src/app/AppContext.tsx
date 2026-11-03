@@ -7,6 +7,7 @@ import initialChallenges from '../data/challenges.json';
 import initialParticipations from '../data/challengeParticipations.json';
 import initialTrainings from '../data/trainings.json';
 import { getCountedTrainings } from '../utils/challengeProgress.ts';
+import { isFutureChallengeDeadline } from '../utils/challengeDeadline.ts';
 import { usePersistentState } from '../hooks/usePersistentState.ts';
 
 // ── Tipos del contexto ──────────────────────────────────────────────────────
@@ -276,21 +277,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  /** Crear un reto exclusivamente en una comunidad a la que pertenece el usuario. */
+  /** HU-06 — Solo el administrador de esta comunidad puede publicar un reto. */
   const createChallenge = (communityId: string, details: NewChallenge): boolean => {
     const community = communities.find((item) => item.id === communityId);
+    if (!community || community.adminId !== currentUser.id || !community.memberIds.includes(currentUser.id)) return false;
     const title = details.title.trim();
     const description = details.description.trim();
     const activities: NewChallenge['activityTypes'] = ['running', 'cycling', 'walking', 'strength'];
-    if (!community?.memberIds.includes(currentUser.id)) return false;
     if (title.length < 3 || title.length > 80 || description.length < 10 || description.length > 300) return false;
     if (!Number.isInteger(details.target) || details.target < 1 || details.target > 500) return false;
     if (details.activityTypes.length !== 1 || !activities.includes(details.activityTypes[0])) return false;
+    if (!isFutureChallengeDeadline(details.deadline)) return false;
 
     const id = `ch-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
     const newChallenge: Challenge = {
       id, communityId, title, description, status: 'active',
       activityTypes: [...details.activityTypes], target: details.target,
+      deadline: details.deadline,
     };
     setChallenges((prev) => [newChallenge, ...prev]);
     // El creador participa desde el mismo momento de creación.
@@ -334,6 +337,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       userId: currentUser.id,
       ...training,
     });
+  };
+
   /**
    * HU-20 — Aceptar una solicitud de amistad recibida.
    * Actualiza ambos perfiles a "Amigos" (se añaden mutuamente a friendIds)

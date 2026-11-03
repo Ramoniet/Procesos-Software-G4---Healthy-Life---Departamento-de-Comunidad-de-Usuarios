@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import type { ActivityType, NewChallenge } from '../types/index.ts';
 import { ACTIVITY_LABELS } from './ChallengeCard.tsx';
+import { getMinChallengeDeadline, isFutureChallengeDeadline } from '../utils/challengeDeadline.ts';
 
 interface CreateChallengeFormProps {
   onCreate: (challenge: NewChallenge) => boolean;
@@ -12,13 +13,34 @@ export function CreateChallengeForm({ onCreate, onClose }: CreateChallengeFormPr
   const [description, setDescription] = useState('');
   const [activityType, setActivityType] = useState<ActivityType>('running');
   const [target, setTarget] = useState(10);
+  const [deadline, setDeadline] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
-    if (title.trim().length < 3 || description.trim().length < 10 || !Number.isInteger(target) || target < 1 || target > 500) {
-      setError('Comprueba el título (mínimo 3 caracteres), la descripción (mínimo 10) y la meta (entre 1 y 500).');
+    if (title.trim().length < 3 || title.trim().length > 80) {
+      setError('El nombre del reto debe tener entre 3 y 80 caracteres.');
+      return;
+    }
+    if (description.trim().length < 10 || description.trim().length > 300) {
+      setError('La descripción debe tener entre 10 y 300 caracteres.');
+      return;
+    }
+    if (!Object.hasOwn(ACTIVITY_LABELS, activityType)) {
+      setError('Selecciona una actividad del catálogo.');
+      return;
+    }
+    if (!Number.isInteger(target) || target < 1 || target > 500) {
+      setError('La meta debe ser un número entero entre 1 y 500 sesiones.');
+      return;
+    }
+    if (!deadline) {
+      setError('Selecciona una fecha límite para el reto.');
+      return;
+    }
+    if (!isFutureChallengeDeadline(deadline)) {
+      setError('La fecha límite debe ser una fecha válida posterior a hoy.');
       return;
     }
     const created = onCreate({
@@ -26,16 +48,17 @@ export function CreateChallengeForm({ onCreate, onClose }: CreateChallengeFormPr
       description: description.trim(),
       activityTypes: [activityType],
       target,
+      deadline,
     });
     if (created) onClose();
-    else setError('No se ha podido crear el reto. Comprueba que sigues siendo miembro de esta comunidad.');
+    else setError('No se ha podido crear el reto. Comprueba que sigues siendo el administrador de esta comunidad y que la fecha límite sigue siendo posterior a hoy.');
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" role="presentation" onMouseDown={(event) => {
       if (event.target === event.currentTarget) onClose();
     }}>
-      <section role="dialog" aria-modal="true" aria-labelledby="new-challenge-title" className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+      <section role="dialog" aria-modal="true" aria-labelledby="new-challenge-title" className="max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
         <div className="mb-5 flex items-start justify-between gap-3">
           <div>
             <h2 id="new-challenge-title" className="text-xl font-bold text-secondary">Crear reto colectivo</h2>
@@ -43,7 +66,7 @@ export function CreateChallengeForm({ onCreate, onClose }: CreateChallengeFormPr
           </div>
           <button type="button" onClick={onClose} aria-label="Cerrar formulario" className="cursor-pointer rounded-lg px-2 py-1 text-xl text-gray-500 hover:bg-gray-100">×</button>
         </div>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label className="text-sm font-semibold text-secondary">
             Nombre del reto
             <input required minLength={3} maxLength={80} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej.: 20 carreras entre todos" className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 font-normal" />
@@ -64,6 +87,10 @@ export function CreateChallengeForm({ onCreate, onClose }: CreateChallengeFormPr
               <input required type="number" min={1} max={500} step={1} value={target} onChange={(e) => setTarget(Number(e.target.value))} className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 font-normal" />
             </label>
           </div>
+          <label className="text-sm font-semibold text-secondary">
+            Fecha límite
+            <input required type="date" min={getMinChallengeDeadline()} value={deadline} onChange={(e) => setDeadline(e.target.value)} className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 font-normal" />
+          </label>
           <p className="text-xs text-gray-500">El creador quedará inscrito automáticamente. Cada entrenamiento compatible cuenta como una sesión.</p>
           {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
