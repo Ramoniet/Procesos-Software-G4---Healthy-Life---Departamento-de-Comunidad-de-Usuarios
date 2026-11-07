@@ -267,6 +267,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
 
     setComments((prev) => [...prev, newComment]);
+  };
   /**
    * HU-17 — Enviar solicitud de amistad a otro miembro de la comunidad
    */
