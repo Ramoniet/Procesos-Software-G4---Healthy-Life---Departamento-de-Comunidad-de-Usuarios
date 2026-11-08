@@ -123,7 +123,7 @@ test('El administrador local crea un reto activo, con fecha e inscripción autom
 
 test('La llamada directa rechaza miembros, administradores ajenos y no miembros sin efectos', () => {
   const h = harness();
-  for (const [user, community] of [['u3', 'c2'], ['u2', 'c1'], ['u1', 'c2'], ['u4', 'c1'], ['u1', 'inexistente']]) {
+  for (const [user, community] of [['u3', 'c2'], ['u2', 'c1'], ['u4', 'c2'], ['u4', 'c1'], ['u1', 'inexistente']]) {
     const before = h.as(user);
     assert.equal(before.createChallenge(community, validDetails), false);
     const after = h.api();
