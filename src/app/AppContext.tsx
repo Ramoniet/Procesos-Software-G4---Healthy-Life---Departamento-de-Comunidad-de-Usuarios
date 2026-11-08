@@ -102,10 +102,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   /**
-   * Crea una nueva comunidad con temática y convierte al usuario actual en admin
-   * si aún no tiene ese rol.
+   * Crea una nueva comunidad con temática. Solo disponible para usuarios con rol 'admin'.
    */
   const createCommunity = (name: string, description: string, topic: CommunityTopic) => {
+    if (currentUser.role !== 'admin') return;
+
     const newCommunity: Community = {
       id: `c${Date.now()}`,
       name,
@@ -118,14 +119,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
 
     setCommunities((prev) => [...prev, newCommunity]);
-
-    if (currentUser.role !== 'admin') {
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === currentUser.id ? { ...u, role: 'admin' as const } : u,
-        ),
-      );
-    }
   };
 
   /** Une al usuario actual a una comunidad existente. */

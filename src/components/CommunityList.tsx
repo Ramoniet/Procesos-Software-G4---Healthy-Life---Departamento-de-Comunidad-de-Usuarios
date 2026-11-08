@@ -23,6 +23,7 @@ export function CommunityList() {
   }, [search, activeTopic]);
 
   const handleCreate = (name: string, description: string, topic: CommunityTopic) => {
+    if (currentUser.role !== 'admin') return;
     createCommunity(name, description, topic);
     setShowForm(false);
   };
@@ -63,12 +64,14 @@ export function CommunityList() {
           >
             Retos colectivos
           </button>
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-primary hover:bg-primary/85 text-white font-medium rounded-lg px-5 py-2 text-sm transition-colors cursor-pointer whitespace-nowrap"
-          >
-            + Crear comunidad
-          </button>
+          {currentUser.role === 'admin' && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-primary hover:bg-primary/85 text-white font-medium rounded-lg px-5 py-2 text-sm transition-colors cursor-pointer whitespace-nowrap"
+            >
+              + Crear comunidad
+            </button>
+          )}
         </div>
       </div>
 
@@ -148,7 +151,7 @@ export function CommunityList() {
       )}
 
       {/* Modal: formulario de creación */}
-      {showForm && (
+      {showForm && currentUser.role === 'admin' && (
         <CreateCommunityForm
           onSubmit={handleCreate}
           onClose={() => setShowForm(false)}
