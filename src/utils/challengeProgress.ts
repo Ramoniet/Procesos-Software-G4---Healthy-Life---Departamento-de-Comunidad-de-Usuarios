@@ -2,6 +2,7 @@ import type { Challenge, ChallengeParticipation, Training } from '../types/index
 
 /**
  * HU-07 / CHLS-60: calcula el progreso colectivo a partir de entrenamientos.
+ * HU-08: Cálculo del progreso colectivo para visualización.
  * - Solo cuentan los entrenamientos de usuarios inscritos.
  * - Deben ser compatibles y posteriores a la inscripción.
  * - Cada entrenamiento (id) cuenta una sola vez por reto.
