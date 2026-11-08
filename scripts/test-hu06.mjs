@@ -108,7 +108,7 @@ function elements(tree, predicate) {
 
 test('El administrador local crea un reto activo, con fecha e inscripción automática', () => {
   const h = harness();
-  assert.equal(h.api().currentUser.role, 'user'); // El permiso depende de adminId.
+  assert.equal(h.api().currentUser.role, 'admin'); // El permiso depende de adminId.
   assert.equal(h.api().createChallenge('c1', { ...validDetails, title: '  Reto de carreras  ' }), true);
   const { challenges, challengeParticipations } = h.api();
   const challenge = challenges[0];
@@ -123,7 +123,7 @@ test('El administrador local crea un reto activo, con fecha e inscripción autom
 
 test('La llamada directa rechaza miembros, administradores ajenos y no miembros sin efectos', () => {
   const h = harness();
-  for (const [user, community] of [['u3', 'c2'], ['u2', 'c1'], ['u1', 'c2'], ['u4', 'c1'], ['u1', 'inexistente']]) {
+  for (const [user, community] of [['u3', 'c2'], ['u2', 'c1'], ['u4', 'c2'], ['u4', 'c1'], ['u1', 'inexistente']]) {
     const before = h.as(user);
     assert.equal(before.createChallenge(community, validDetails), false);
     const after = h.api();

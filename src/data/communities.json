@@ -14,9 +14,9 @@
     "name": "Hábitos Saludables URJC",
     "description": "Grupo para compartir nuestros logros diarios, rutinas y motivación entre compañeros.",
     "topic": "nutricion",
-    "members": 2,
-    "adminId": "u2",
-    "memberIds": ["u2", "u3"],
+    "members": 3,
+    "adminId": "u1",
+    "memberIds": ["u1", "u2", "u3"],
     "createdAt": "2026-10-03T16:30:00Z"
   }
 ]

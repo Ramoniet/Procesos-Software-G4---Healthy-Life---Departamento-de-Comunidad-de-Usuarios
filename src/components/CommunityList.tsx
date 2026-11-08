@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ComunityCard } from "./ComunityCard.tsx";
 import { CreateCommunityForm } from "./CreateCommunityForm.tsx";
+import { CommunityToolbar } from "./CommunityToolbar.tsx";
+import { TopicFilter } from "./TopicFilter.tsx";
+import { Pagination } from "./Pagination.tsx";
 import { useApp } from "../app/AppContext.tsx";
 import type { CommunityTopic } from "../types/index.ts";
-import { TOPIC_LIST } from "../utils/topics.ts";
 
 export function CommunityList() {
   const { communities, createCommunity, currentUser } = useApp();
@@ -23,6 +25,7 @@ export function CommunityList() {
   }, [search, activeTopic]);
 
   const handleCreate = (name: string, description: string, topic: CommunityTopic) => {
+    if (currentUser.role !== 'admin') return;
     createCommunity(name, description, topic);
     setShowForm(false);
   };
@@ -45,60 +48,18 @@ export function CommunityList() {
   return (
     <section className="p-6">
       {/* Toolbar: búsqueda + botón crear */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-        <h1 className="text-2xl font-semibold text-secondary">
-          Todas las comunidades
-        </h1>
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <input
-            type="text"
-            placeholder="Buscar comunidad..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 w-full sm:w-64"
-          />
-          <button
-            onClick={() => navigate('/retos')}
-            className="border border-primary text-primary hover:bg-primary/10 font-medium rounded-lg px-5 py-2 text-sm transition-colors cursor-pointer whitespace-nowrap"
-          >
-            Retos colectivos
-          </button>
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-primary hover:bg-primary/85 text-white font-medium rounded-lg px-5 py-2 text-sm transition-colors cursor-pointer whitespace-nowrap"
-          >
-            + Crear comunidad
-          </button>
-        </div>
-      </div>
+      <CommunityToolbar
+        search={search}
+        onSearchChange={setSearch}
+        canCreateCommunity={currentUser.role === 'admin'}
+        onCreateCommunityClick={() => setShowForm(true)}
+      />
 
       {/* Filtros por temática */}
-      <div className="flex items-center gap-2 flex-wrap mb-6">
-        <button
-          onClick={() => setActiveTopic(null)}
-          className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-all cursor-pointer ${
-            activeTopic === null
-              ? 'bg-secondary text-white border-secondary'
-              : 'border-gray-200 text-gray-500 hover:border-gray-400'
-          }`}
-        >
-          Todas
-        </button>
-        {TOPIC_LIST.map(([key, meta]) => (
-          <button
-            key={key}
-            onClick={() => setActiveTopic(activeTopic === key ? null : key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all cursor-pointer ${
-              activeTopic === key
-                ? `${meta.badgeCls} border-transparent`
-                : 'border-gray-200 text-gray-500 hover:border-gray-400'
-            }`}
-          >
-            <span>{meta.emoji}</span>
-            {meta.label}
-          </button>
-        ))}
-      </div>
+      <TopicFilter
+        activeTopic={activeTopic}
+        onSelectTopic={setActiveTopic}
+      />
 
       {/* Grid de tarjetas paginado */}
       {paginatedCommunities.length > 0 ? (
@@ -119,27 +80,11 @@ export function CommunityList() {
           </div>
 
           {/* Controles de Paginación */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-4 mt-4 border-t border-gray-100 pt-6">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="px-4 py-2 text-sm font-medium text-secondary border border-gray-200 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                Anterior
-              </button>
-              <span className="text-sm font-medium text-gray-500">
-                Página {currentPage} de {totalPages}
-              </span>
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 text-sm font-medium text-secondary border border-gray-200 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
-              >
-                Siguiente
-              </button>
-            </div>
-          )}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       ) : (
         <p className="text-gray-400 text-center py-12">
@@ -148,7 +93,7 @@ export function CommunityList() {
       )}
 
       {/* Modal: formulario de creación */}
-      {showForm && (
+      {showForm && currentUser.role === 'admin' && (
         <CreateCommunityForm
           onSubmit={handleCreate}
           onClose={() => setShowForm(false)}
