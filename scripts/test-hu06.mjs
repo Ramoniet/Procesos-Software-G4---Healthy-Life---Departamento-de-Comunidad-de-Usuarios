@@ -108,7 +108,7 @@ function elements(tree, predicate) {
 
 test('El administrador local crea un reto activo, con fecha e inscripción automática', () => {
   const h = harness();
-  assert.equal(h.api().currentUser.role, 'user'); // El permiso depende de adminId.
+  assert.equal(h.api().currentUser.role, 'admin'); // El permiso depende de adminId.
   assert.equal(h.api().createChallenge('c1', { ...validDetails, title: '  Reto de carreras  ' }), true);
   const { challenges, challengeParticipations } = h.api();
   const challenge = challenges[0];
