@@ -398,7 +398,13 @@ export function CommunityPage() {
           )}
 
           {/* HU-12 y HU-13: Listado dinámico de publicaciones del feed */}
-          <PostList posts={communityPosts} users={users} />
+          <PostList
+            posts={communityPosts}
+            users={users}
+            comments={comments}
+            canComment={isMember}
+            onCreateComment={createComment}
+          />
         </div>
       ) : activeTab === 'members' ? (
         /* ── Apartado para ver los miembros de la comunidad ── */
