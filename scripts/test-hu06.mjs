@@ -16,10 +16,11 @@ const validDetails = {
 };
 const compiled = new Map();
 
-function harness() {
+function harness(initialStorage = {}, { storageBlocked = false } = {}) {
   const modules = new Map();
   const states = new Map();
   const storage = new Map();
+  for (const [key, value] of Object.entries(initialStorage)) storage.set(key, value);
   let hooks;
   let cursor;
   let effects;
@@ -74,8 +75,14 @@ function harness() {
     }).runInNewContext({
       Date: FixedDate,
       window: { localStorage: {
-        getItem: (key) => storage.get(key) ?? null,
-        setItem: (key, value) => storage.set(key, value),
+        getItem: (key) => {
+          if (storageBlocked) throw new Error('localStorage bloqueado');
+          return storage.get(key) ?? null;
+        },
+        setItem: (key, value) => {
+          if (storageBlocked) throw new Error('localStorage bloqueado');
+          storage.set(key, value);
+        },
       } },
     })(require, module, module.exports);
     return module.exports;
@@ -264,4 +271,117 @@ test('Las tarjetas muestran la fecha solo cuando existe', () => {
   assert.equal(times.length, 1);
   assert.equal(times[0].props.dateTime, validDetails.deadline);
   assert.equal(times[0].props.children, '3/11/2026');
+});
+
+test('Comunidades: alta solo admin, unión y salida no duplican miembros', () => {
+  const h = harness();
+  const initial = h.api().communities.find((c) => c.id === 'c1');
+  h.as('u4').joinCommunity('c1');
+  h.api().joinCommunity('c1');
+  let community = h.api().communities.find((c) => c.id === 'c1');
+  assert.equal(community.members, initial.members + 1);
+  assert.equal(community.memberIds.filter((id) => id === 'u4').length, 1);
+  h.as('u1').leaveCommunity('c1'); // El admin puede salir según la operación del contexto.
+  community = h.api().communities.find((c) => c.id === 'c1');
+  assert.ok(!community.memberIds.includes('u1'));
+  h.as('u4').leaveCommunity('c1');
+  assert.equal(h.api().communities.find((c) => c.id === 'c1').members, initial.members - 1);
+  h.as('u2').createCommunity('No autorizada', '', 'ejercicio');
+  assert.equal(h.api().communities.length, 2);
+  h.as('u1').createCommunity('Nueva', 'Descripción', 'bienestar-mental');
+  assert.ok(h.api().communities.some((c) => c.name === 'Nueva' && c.memberIds.includes('u1')));
+});
+
+test('Solicitudes de comunidad: no duplicados, aceptación/rechazo solo por admin', () => {
+  const h = harness();
+  h.as('u4').requestJoin('c1');
+  h.api().requestJoin('c1');
+  assert.equal(h.api().joinRequests.length, 1);
+  const request = h.api().joinRequests[0];
+  h.as('u4').acceptJoinRequest(request.id, 'c1', 'u4');
+  assert.equal(h.api().joinRequests.length, 1);
+  h.as('u1').acceptJoinRequest(request.id, 'c1', 'u4');
+  assert.ok(h.api().communities.find((c) => c.id === 'c1').memberIds.includes('u4'));
+  assert.equal(h.api().joinRequests.length, 0);
+  h.as('u4').requestJoin('c1'); // Ya miembro.
+  assert.equal(h.api().joinRequests.length, 0);
+  h.as('u4').requestJoin('c2');
+  const reject = h.api().joinRequests[0];
+  h.as('u2').rejectJoinRequest(reject.id);
+  assert.equal(h.api().joinRequests.length, 1);
+  h.as('u1').rejectJoinRequest(reject.id);
+  assert.equal(h.api().joinRequests.length, 0);
+});
+
+test('Publicaciones y comentarios requieren pertenencia y normalizan textos', () => {
+  const h = harness();
+  const before = h.api().posts.length;
+  h.as('u4').createPost('c1', 'No', 'miembro');
+  assert.equal(h.api().posts.length, before);
+  h.as('u1').createPost('c1', '  Título  ', '  contenido  ');
+  const post = h.api().posts[0];
+  assert.equal(post.title, 'Título');
+  assert.equal(post.content, 'contenido');
+  h.as('u4').createComment(post.id, 'No');
+  h.as('u2').createComment('inexistente', 'No');
+  assert.equal(h.api().comments.length, 0);
+  h.as('u2').createComment(post.id, '  Buen trabajo  ');
+  assert.equal(h.api().comments[0].content, 'Buen trabajo');
+  assert.equal(h.api().comments[0].authorId, 'u2');
+});
+
+test('Amistades: envío reversible bloqueado, cancelación y aceptar/rechazar solo destinatario', () => {
+  const h = harness();
+  h.api().sendFriendRequest('u1');
+  h.api().sendFriendRequest('u2');
+  const sent = h.api().friendRequests[0];
+  assert.equal(h.api().friendRequests.length, 1);
+  h.as('u2').sendFriendRequest('u1');
+  assert.equal(h.api().friendRequests.length, 1);
+  h.as('u1').acceptFriendRequest(sent.id);
+  assert.equal(h.api().friendRequests.length, 1);
+  h.as('u2').acceptFriendRequest(sent.id);
+  assert.equal(h.api().friendRequests.length, 0);
+  assert.ok(h.api().users.find((u) => u.id === 'u1').friendIds.includes('u2'));
+  assert.ok(h.api().users.find((u) => u.id === 'u2').friendIds.includes('u1'));
+  h.as('u1').sendFriendRequest('u3');
+  const cancel = h.api().friendRequests[0];
+  h.as('u3').cancelFriendRequest(cancel.id);
+  assert.equal(h.api().friendRequests.length, 1);
+  h.as('u1').cancelFriendRequest(cancel.id);
+  assert.equal(h.api().friendRequests.length, 0);
+  h.as('u1').sendFriendRequest('u3');
+  const reject = h.api().friendRequests[0];
+  h.as('u1').rejectFriendRequest(reject.id);
+  assert.equal(h.api().friendRequests.length, 1);
+  h.as('u3').rejectFriendRequest(reject.id);
+  assert.equal(h.api().friendRequests.length, 0);
+});
+
+test('Persistencia: restaura JSON válido, ignora JSON corrupto y persiste cambios', () => {
+  const key = 'healthy-life:hu07:challenges:v1';
+  const storedValue = [{ id: 'stored-challenge' }];
+  const restored = harness({ [key]: JSON.stringify(storedValue) });
+  assert.deepEqual(JSON.parse(JSON.stringify(restored.api().challenges)), storedValue);
+  assert.deepEqual(JSON.parse(restored.storage.get(key)), storedValue);
+  const recovered = harness({ [key]: '{ corrupto' });
+  assert.equal(recovered.api().challenges.length, 3);
+  recovered.api().createChallenge('c1', validDetails);
+  recovered.api();
+  assert.equal(JSON.parse(recovered.storage.get(key)).length, 4);
+});
+
+test('Almacenamiento bloqueado: usa estado inicial y mantiene cambios en memoria', () => {
+  const key = 'healthy-life:hu07:challenges:v1';
+  const h = harness({}, { storageBlocked: true });
+  assert.equal(h.api().challenges.length, 3); // getItem lanza y se usa el valor inicial.
+  assert.equal(h.api().createChallenge('c1', validDetails), true);
+  assert.equal(h.api().challenges.length, 4); // setItem lanza, pero el estado en memoria sigue operativo.
+  assert.equal(h.storage.has(key), false);
+});
+
+test('Utilidades exponen un catálogo de temas consistente', () => {
+  const { TOPICS, TOPIC_LIST } = harness().load('src/utils/topics.ts');
+  assert.equal(JSON.stringify(TOPIC_LIST.map(([key]) => key).sort()), JSON.stringify(Object.keys(TOPICS).sort()));
+  assert.equal(TOPIC_LIST.length, 3);
 });
